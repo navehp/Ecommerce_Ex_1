@@ -19,6 +19,13 @@ def ICM(graph: networkx.Graph, patients_0: List, iterations: int) -> [Set, Set]:
     return total_infected, total_deceased
 
 
+def propagate(graph, NI):
+    targets = []
+    for node in NI:
+        targets += graph.neighbors(node)
+    return targets
+
+
 def plot_degree_histogram(histogram: Dict):
     plt.bar(list(histogram.keys()), histogram.values(), color='g')
     plt.show()
