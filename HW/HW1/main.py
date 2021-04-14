@@ -6,25 +6,42 @@ import networkx
 import copy
 
 
+
 def LTM(graph: networkx.Graph, patients_0: List, iterations: int) -> Set:
 
     total_infected = set(patients_0)
     susceptible = set(graph.nodes) - total_infected
-    removed = set()
 
+    c_v = {}
+    for node in graph.nodes:
+        c_v[node] = 0
 
     for i in range(iterations):
 
-        I_t_minus_1 = total_infected
-        I_t = set()
+        infected_neighbors_dict = propagate_dict_LTM(graph, total_infected)
 
-        targets = propagate(graph, I_t_minus_1)
+        new_infected = set()
 
-        pass
+        for node in susceptible:
+
+            if node in infected_neighbors_dict:
+
+                sum_of_weights = sum([graph[node][neighbor]['w'] for neighbor in infected_neighbors_dict[node]])
+
+                if CONTAGION * sum_of_weights >= 1 + c_v[node]:
+
+                    new_infected.add(node)
+
+                all_node_neighbors = list(graph.neighbors(node))
+
+                c_v[node] = len(infected_neighbors_dict[node]) / len(all_node_neighbors)
+
+
+        susceptible = susceptible - new_infected
+        total_infected = total_infected.union(new_infected)
 
 
     return total_infected
-
 
 
 
@@ -41,15 +58,20 @@ def propagate(graph, NI):
         targets += graph.neighbors(node)
     return targets
 
-def propagate_dict(graph, NI):
+
+def propagate_dict_LTM(graph, NI):
     targets = {}
+
     for node in NI:
         for neighbor in graph.neighbors(node):
+
             if neighbor not in targets:
                 targets[neighbor] = [node]
             else:
                 targets[neighbor].append(node)
+
     return targets
+
 
 
 def plot_degree_histogram(histogram: Dict):
@@ -136,6 +158,8 @@ def choose_who_to_vaccinate_example(graph: networkx.Graph) -> List:
 "Global Hyper-parameters"
 CONTAGION = 1
 LETHALITY = .15
+patients_0 = [19091, 13254, 5162, 25182, 10872, 6414, 4561, 11881, 1639, 18414, 24468, 9619, 20685, 4033, 14943, 26707, 6675, 16707, 212, 20876, 21798, 17518, 22654, 4914, 21821, 362, 17490, 8472, 23871, 3003, 17531, 20946, 19839, 18587, 17219, 10955, 21184, 24798, 26899, 8370, 17076, 19322, 8734, 1308, 15840, 21292, 1493, 26184, 25897, 6864]
+
 
 if __name__ == "__main__":
     filename_1 = "PartA1.csv"
@@ -156,4 +180,11 @@ if __name__ == "__main__":
 
 
     G3 = build_graph(filename_3)
-    LTM(G3, [0,1,2,3], 10)
+
+    print(len(LTM(graph=G3, patients_0=patients_0[:50], iterations=6)))
+    print(len(LTM(graph=G3, patients_0=patients_0[:48], iterations=6)))
+    print(len(LTM(graph=G3, patients_0=patients_0[:30], iterations=6)))
+
+    CONTAGION = 1.05
+    print(len(LTM(graph=G3, patients_0=patients_0[:30], iterations=6)))
+    print(len(LTM(graph=G3, patients_0=patients_0[:20], iterations=6)))
