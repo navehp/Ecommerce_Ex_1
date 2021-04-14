@@ -7,12 +7,18 @@ import copy
 
 
 def LTM(graph: networkx.Graph, patients_0: List, iterations: int) -> Set:
+
     total_infected = set(patients_0)
-    # TODO implement your code here
+    susceptible = set(graph.nodes) - total_infected
+    removed = set()
+
 
     for i in range(iterations):
 
         I_t_minus_1 = total_infected
+        I_t = set()
+
+        targets = propagate(graph, I_t_minus_1)
 
         pass
 
@@ -33,6 +39,16 @@ def propagate(graph, NI):
     targets = []
     for node in NI:
         targets += graph.neighbors(node)
+    return targets
+
+def propagate_dict(graph, NI):
+    targets = {}
+    for node in NI:
+        for neighbor in graph.neighbors(node):
+            if neighbor not in targets:
+                targets[neighbor] = [node]
+            else:
+                targets[neighbor].append(node)
     return targets
 
 
