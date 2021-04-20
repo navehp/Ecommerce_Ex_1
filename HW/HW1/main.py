@@ -128,6 +128,9 @@ def infect(graph, targets, concern_variables):
 
 def plot_degree_histogram(histogram: Dict):
     plt.bar(list(histogram.keys()), histogram.values(), color='g')
+    plt.xlabel('Degree')
+    plt.ylabel('Number of Nodes')
+    plt.title("Degree Histogram")
     plt.show()
     return
 
@@ -188,8 +191,8 @@ def compute_lethality_effect(graph: networkx.Graph, t: int) -> [Dict, Dict]:
 
 
 def plot_lethality_effect(mean_deaths: Dict, mean_infected: Dict):
-    plt.plot(mean_infected.keys(), mean_infected.values(), label='Mean Infected', color='b')
-    plt.plot(mean_deaths.keys(), mean_deaths.values(), label='Mean Deaths', color='r')
+    plt.plot(list(mean_infected.keys()), list(mean_infected.values()), label='Mean Infected', color='b')
+    plt.plot(list(mean_deaths.keys()), list(mean_deaths.values()), label='Mean Deaths', color='r')
     plt.xlabel('Lethality')
     plt.ylabel('Mean')
     plt.title('Lethality Effect')
@@ -222,11 +225,12 @@ def check_measurement_effectiveness(graph, measurement, reverse=True, iters=5, s
 
     for _ in range(iters):
         clone = graph.copy()
-        to_remove = len(clone.nodes) - subgraph_size
-        subgraph_nodes = np.random.choice(list(clone.nodes), size=to_remove, replace=False, p=None)
-        clone.remove_nodes_from(subgraph_nodes)
+        # to_remove = len(clone.nodes) - subgraph_size
+        # subgraph_nodes = np.random.choice(list(clone.nodes), size=to_remove, replace=False, p=None)
+        # clone.remove_nodes_from(subgraph_nodes)
 
         measurement_result = measurement(clone)
+        measurement_result = {i: j for (i, j) in measurement_result}
         top_50 = sorted(measurement_result, reverse=reverse, key=lambda x: measurement_result[x])[:50]
         clone.remove_nodes_from(top_50)
 
@@ -245,81 +249,90 @@ def check_measurement_effectiveness(graph, measurement, reverse=True, iters=5, s
 patients_0 = [19091, 13254, 5162, 25182, 10872, 6414, 4561, 11881, 1639, 18414, 24468, 9619, 20685, 4033, 14943, 26707, 6675, 16707, 212, 20876, 21798, 17518, 22654, 4914, 21821, 362, 17490, 8472, 23871, 3003, 17531, 20946, 19839, 18587, 17219, 10955, 21184, 24798, 26899, 8370, 17076, 19322, 8734, 1308, 15840, 21292, 1493, 26184, 25897, 6864]
 
 CONTAGION = 0.8
-LETHALITY = .2
+LETHALITY = .15
 
 if __name__ == "__main__":
     filename_1 = "PartA1.csv"
     filename_2 = "PartA2.csv"
     filename_3 = "PartB-C.csv"
 
+    # filename_1 = "./HW/HW1/PartA1.csv"
+    # filename_2 = "./HW/HW1/PartA2.csv"
+    # filename_3 = "./HW/HW1/PartB-C.csv"
+
+    #########################
+    ######## PART A #########
+    #########################
+
+    # Building Graphs
     # G1 = build_graph(filename=filename_1)
     # G2 = build_graph(filename=filename_2)
-    #
+    G3 = build_graph(filename=filename_3)
+
+    # # Q2 Calculating degree histograms
     # histogram_1 = calc_degree_histogram(G1)
     # histogram_2 = calc_degree_histogram(G2)
+    # histogram_3 = calc_degree_histogram(G3)
+    #
+    # # Q3 Plotting degree histograms
     # plot_degree_histogram(histogram_1)
     # plot_degree_histogram(histogram_2)
+    # plot_degree_histogram(histogram_3)
     #
+    # # Q5 Calculating clustering coefficient
     # print(clustering_coefficient(G1))
     # print(clustering_coefficient(G2))
-    G3 = build_graph(filename_3)
-    # for measurment in [networkx.degree_centrality,
-    #                    networkx.eigenvector_centrality_numpy,
-    #                    networkx.katz_centrality_numpy,
-    #                    networkx.closeness_centrality,
-    #                    networkx.current_flow_closeness_centrality,
-    #                    networkx.information_centrality,
-    #                    networkx.betweenness_centrality,
-    #                    networkx.current_flow_betweenness_centrality,
-    #                    networkx.load_centrality,
-    #                    networkx.harmonic_centrality,
-    #                    networkx.second_order_centrality,
-    #                    networkx.trophic_levels,
-    #                    networkx.voterank]:
-    #     clone = G3.copy()
-    #     try:
-    #         mean_infected, mean_deceased = check_measurement_effectiveness(clone, measurment, iters=4, subgraph_size=5000,
-    #                                                                        num_0=50)
-    #         print(measurment, mean_infected, mean_deceased)
-    #     except Exception as e:
-    #         print(f"Failed {measurment}, {e}")
-        # i = 0
-        # sub_graph = G3.subgraph(list(G3.neighbors(i)) + [i])
-        # pos = networkx.spring_layout(sub_graph)
-        # networkx.draw_networkx(sub_graph, pos)
-        # labels = networkx.get_edge_attributes(sub_graph, 'w')
-        # labels = {i: round(j, 4) for (i, j) in labels.items()}
-        # networkx.draw_networkx_edge_labels(sub_graph, pos, edge_labels=labels)
-        # # networkx.draw_networkx_edges(sub_graph, sub_graph.edges)
-        # plt.show()
-
-    # ICM(sub_graph, [0], 2)
-
     #
-    mean_infected = 0
-    mean_deceased = 0
-    iters = 30
-    np.random.seed(42)
-
-    for i in range(iters):
-        infected, deceased = ICM(G3, patients_0[:50], 6)
-        # infected, deceased = ICM(G3, patients_0[:20], 4)
-        mean_infected += len(infected)
-        mean_deceased += len(deceased)
-
-    mean_infected /= iters
-    mean_deceased /= iters
-
-    print(mean_infected)
-    print(mean_deceased)
-
+    # #########################
+    # ######## PART B #########
+    # #########################
+    #
+    # # Q5 Calculating and plotting lethality effect
     # mean_deaths, mean_infections = compute_lethality_effect(G3, 6)
     # plot_lethality_effect(mean_deaths, mean_infections)
-    # CONTAGION = 1
-    # print(len(LTM(graph=G3, patients_0=patients_0[:50], iterations=6)))
-    # print(len(LTM(graph=G3, patients_0=patients_0[:48], iterations=6)))
-    # print(len(LTM(graph=G3, patients_0=patients_0[:30], iterations=6)))
+
+    # clustering_coefficients = networkx.clustering(G3)
+    # clustering_coefficients_0 = {c: clustering_coefficients[c] for c in clustering_coefficients if clustering_coefficients[c] == 0}
+    # clustering_coefficients_01 = {c: clustering_coefficients[c] for c in clustering_coefficients if clustering_coefficients[c] < 0.1 and clustering_coefficients[c] > 0}
+    # # plt.hist(clustering_coefficients)
+    # # plt.show()
+    # degrees = networkx.degree(G3)
+    # degrees_0 = {c: degrees[c] for c in clustering_coefficients_0}
+    # degrees_01 = {c: degrees[c] for c in clustering_coefficients_01}
+    # # plt.hist(degrees_0.values())
+    # # plt.show()
+    # # plt.hist(degrees_01.values())
+    # # plt.show()
+    # # print(np.mean(list(degrees_0.values())))
+    # # print(np.mean(list(degrees_01.values())))
     #
-    # CONTAGION = 1.05
-    # print(len(LTM(graph=G3, patients_0=patients_0[:30], iterations=6)))
-    # print(len(LTM(graph=G3, patients_0=patients_0[:20], iterations=6)))
+    # iters = 15
+    # num_0 = 50
+    #
+    # for upper_bound in [0, 0.01, 0.025, 0.05, 0.1, 0.5]:
+    #     for lower_bound in [-1, 0, 0.01, 0.025, 0.05, 0.1, 0.5]:
+    #         if lower_bound < upper_bound:
+    #             filtered_coefficients = {c: clustering_coefficients[c] for c in clustering_coefficients if clustering_coefficients[c] <= upper_bound and clustering_coefficients[c] > lower_bound}
+    #             filtered_degrees = {c: degrees[c] for c in filtered_coefficients}
+    #             top_50 = sorted(filtered_degrees.keys(), key=lambda x: filtered_degrees[x], reverse=True)[:50]
+    #
+    #             np.random.seed(0)
+    #
+    #             mean_infected = 0
+    #             mean_deceased = 0
+    #             for _ in range(iters):
+    #                 clone = G3.copy()
+    #                 # to_remove = len(clone.nodes) - subgraph_size
+    #                 # subgraph_nodes = np.random.choice(list(clone.nodes), size=to_remove, replace=False, p=None)
+    #                 # clone.remove_nodes_from(subgraph_nodes)
+    #
+    #                 clone.remove_nodes_from(top_50)
+    #
+    #                 patients_0 = np.random.choice(list(clone.nodes), size=num_0, replace=False, p=None)
+    #                 infected, deceased = ICM(clone, patients_0, 6)
+    #                 mean_infected += len(infected) / iters
+    #                 mean_deceased += len(deceased) / iters
+    #
+    #             print(lower_bound, upper_bound, mean_infected, mean_deceased)
+
+
