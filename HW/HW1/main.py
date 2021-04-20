@@ -216,21 +216,23 @@ def choose_who_to_vaccinate_example(graph: networkx.Graph) -> List:
 
 def check_measurement_effectiveness(graph, measurement, reverse=True, iters=5, subgraph_size=5000, num_0=50):
     np.random.seed(0)
-    to_remove = len(graph.nodes) - subgraph_size
-    subgraph_nodes = np.random.choice(list(graph.nodes), size=to_remove, replace=False, p=None)
-    graph.remove_nodes_from(subgraph_nodes)
-
-    measurement_result = measurement(graph)
-    top_50 = sorted(measurement_result, reverse=reverse, key=lambda x: measurement_result[x])[:50]
-    graph.remove_nodes_from(top_50)
-
-
 
     mean_infected = 0
     mean_deceased = 0
+
     for _ in range(iters):
-        patients_0 = np.random.choice(list(graph.nodes), size=num_0, replace=False, p=None)
-        infected, deceased = ICM(graph, patients_0, 6)
+        clone = graph.copy()
+        to_remove = len(clone.nodes) - subgraph_size
+        subgraph_nodes = np.random.choice(list(clone.nodes), size=to_remove, replace=False, p=None)
+        clone.remove_nodes_from(subgraph_nodes)
+
+        measurement_result = measurement(clone)
+        top_50 = sorted(measurement_result, reverse=reverse, key=lambda x: measurement_result[x])[:50]
+        clone.remove_nodes_from(top_50)
+
+
+        patients_0 = np.random.choice(list(clone.nodes), size=num_0, replace=False, p=None)
+        infected, deceased = ICM(clone, patients_0, 6)
         mean_infected += len(infected) / iters
         mean_deceased += len(deceased) / iters
 
@@ -261,26 +263,26 @@ if __name__ == "__main__":
     # print(clustering_coefficient(G1))
     # print(clustering_coefficient(G2))
     G3 = build_graph(filename_3)
-    for measurment in [networkx.degree_centrality,
-                       networkx.eigenvector_centrality_numpy,
-                       networkx.katz_centrality_numpy,
-                       networkx.closeness_centrality,
-                       networkx.current_flow_closeness_centrality,
-                       networkx.information_centrality,
-                       networkx.betweenness_centrality,
-                       networkx.current_flow_betweenness_centrality,
-                       networkx.load_centrality,
-                       networkx.harmonic_centrality,
-                       networkx.second_order_centrality,
-                       networkx.trophic_levels,
-                       networkx.voterank]:
-        clone = G3.copy()
-        try:
-            mean_infected, mean_deceased = check_measurement_effectiveness(clone, measurment, iters=1, subgraph_size=5000,
-                                                                           num_0=50)
-            print(measurment, mean_infected, mean_deceased)
-        except Exception as e:
-            print(f"Failed {measurment}, {e}")
+    # for measurment in [networkx.degree_centrality,
+    #                    networkx.eigenvector_centrality_numpy,
+    #                    networkx.katz_centrality_numpy,
+    #                    networkx.closeness_centrality,
+    #                    networkx.current_flow_closeness_centrality,
+    #                    networkx.information_centrality,
+    #                    networkx.betweenness_centrality,
+    #                    networkx.current_flow_betweenness_centrality,
+    #                    networkx.load_centrality,
+    #                    networkx.harmonic_centrality,
+    #                    networkx.second_order_centrality,
+    #                    networkx.trophic_levels,
+    #                    networkx.voterank]:
+    #     clone = G3.copy()
+    #     try:
+    #         mean_infected, mean_deceased = check_measurement_effectiveness(clone, measurment, iters=4, subgraph_size=5000,
+    #                                                                        num_0=50)
+    #         print(measurment, mean_infected, mean_deceased)
+    #     except Exception as e:
+    #         print(f"Failed {measurment}, {e}")
         # i = 0
         # sub_graph = G3.subgraph(list(G3.neighbors(i)) + [i])
         # pos = networkx.spring_layout(sub_graph)
@@ -294,20 +296,22 @@ if __name__ == "__main__":
     # ICM(sub_graph, [0], 2)
 
     #
-    # mean_infected = 0
-    # mean_deceased = 0
-    # iters = 30
-    # for i in range(iters):
-    #     # infected, deceased = ICM(G3, patients_0[:50], 6)
-    #     infected, deceased = ICM(G3, patients_0[:20], 4)
-    #     mean_infected += len(infected)
-    #     mean_deceased += len(deceased)
-    #
-    # mean_infected /= iters
-    # mean_deceased /= iters
-    #
-    # print(mean_infected)
-    # print(mean_deceased)
+    mean_infected = 0
+    mean_deceased = 0
+    iters = 30
+    np.random.seed(42)
+
+    for i in range(iters):
+        infected, deceased = ICM(G3, patients_0[:50], 6)
+        # infected, deceased = ICM(G3, patients_0[:20], 4)
+        mean_infected += len(infected)
+        mean_deceased += len(deceased)
+
+    mean_infected /= iters
+    mean_deceased /= iters
+
+    print(mean_infected)
+    print(mean_deceased)
 
     # mean_deaths, mean_infections = compute_lethality_effect(G3, 6)
     # plot_lethality_effect(mean_deaths, mean_infections)
