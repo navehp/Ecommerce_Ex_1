@@ -1,3 +1,4 @@
+import time
 from typing import List, Set, Dict
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -201,20 +202,72 @@ def plot_lethality_effect(mean_deaths: Dict, mean_infected: Dict):
 
 
 def choose_who_to_vaccinate(graph: networkx.Graph) -> List:
-    people_to_vaccinate = []
-    # TODO implement your code here
-    return people_to_vaccinate
+    time_threshold = 55
+    iters = 5
+    sampling_iters = 1
+    num_0 = 50
+    lower_bound = 0
 
+    start = time.time()
 
-def choose_who_to_vaccinate_example(graph: networkx.Graph) -> List:
-    """
-    The following heuristic for Part C is simply taking the top 50 friendly people;
-     that is, it returns the top 50 nodes in the graph with the highest degree.
-    """
-    node2degree = dict(graph.degree)
-    sorted_nodes = sorted(node2degree.items(), key=lambda item: item[1], reverse=True)[:50]
-    people_to_vaccinate = [node[0] for node in sorted_nodes]
-    return people_to_vaccinate
+    best_50 = np.random.choice(list(graph.nodes), size=50, replace=False, p=None)
+    best_mean_infected = float('inf')
+    best_upper_bound = float('inf')
+    clustering_coefficients = networkx.clustering(graph)
+    degrees = networkx.degree(graph)
+
+    for upper_bound in [0.03, 0.035, 0.04, 0.045, 0.05, 0.055, 0.06]:
+        if time.time() - start > time_threshold:
+            return best_50
+        filtered_coefficients = {c: clustering_coefficients[c] for c in clustering_coefficients if
+                                 clustering_coefficients[c] <= upper_bound and clustering_coefficients[c] > lower_bound}
+        filtered_degrees = {c: degrees[c] for c in filtered_coefficients}
+        top_50 = sorted(filtered_degrees.keys(), key=lambda x: filtered_degrees[x], reverse=True)[:50]
+        clone = G3.copy()
+        clone.remove_nodes_from(top_50)
+
+        np.random.seed(0)
+
+        mean_infected = 0
+        for _ in range(iters):
+            patients_0 = np.random.choice(list(clone.nodes), size=num_0, replace=False, p=None)
+            infected, deceased = ICM(clone, patients_0, 6)
+            mean_infected += len(infected) / iters
+
+        if mean_infected < best_mean_infected:
+            print(mean_infected)
+            print(upper_bound)
+            best_mean_infected = mean_infected
+            best_upper_bound = upper_bound
+            best_50 = top_50
+
+    filtered_coefficients = {c: clustering_coefficients[c] for c in clustering_coefficients if
+                             clustering_coefficients[c] <= best_upper_bound and clustering_coefficients[c] > lower_bound}
+    filtered_degrees = {c: degrees[c] for c in filtered_coefficients}
+    top_150 = sorted(filtered_degrees.keys(), key=lambda x: filtered_degrees[x], reverse=True)[:55]
+    top_150_degrees = [filtered_degrees[node] for node in top_150]
+    weights = np.exp(top_150_degrees) / np.sum(np.exp(top_150_degrees), axis=0)
+
+    print('started sampling')
+    while time.time() - start < time_threshold:
+        to_remove = np.random.choice(top_150, 50, p=weights, replace=False)
+        clone = G3.copy()
+        clone.remove_nodes_from(to_remove)
+
+        np.random.seed(0)
+
+        mean_infected = 0
+        for _ in range(sampling_iters):
+            patients_0 = np.random.choice(list(clone.nodes), size=num_0, replace=False, p=None)
+            infected, deceased = ICM(clone, patients_0, 6)
+            mean_infected += len(infected) / sampling_iters
+
+        if mean_infected < best_mean_infected:
+            print(mean_infected)
+            best_mean_infected = mean_infected
+            best_50 = to_remove
+
+    return best_50
 
 
 def check_measurement_effectiveness(graph, measurement, reverse=True, iters=5, subgraph_size=5000, num_0=50):
@@ -246,7 +299,7 @@ def check_measurement_effectiveness(graph, measurement, reverse=True, iters=5, s
 "Global Hyper-parameters"
 # CONTAGION = 1
 # LETHALITY = .15
-patients_0 = [19091, 13254, 5162, 25182, 10872, 6414, 4561, 11881, 1639, 18414, 24468, 9619, 20685, 4033, 14943, 26707, 6675, 16707, 212, 20876, 21798, 17518, 22654, 4914, 21821, 362, 17490, 8472, 23871, 3003, 17531, 20946, 19839, 18587, 17219, 10955, 21184, 24798, 26899, 8370, 17076, 19322, 8734, 1308, 15840, 21292, 1493, 26184, 25897, 6864]
+patients0 = [19091, 13254, 5162, 25182, 10872, 6414, 4561, 11881, 1639, 18414, 24468, 9619, 20685, 4033, 14943, 26707, 6675, 16707, 212, 20876, 21798, 17518, 22654, 4914, 21821, 362, 17490, 8472, 23871, 3003, 17531, 20946, 19839, 18587, 17219, 10955, 21184, 24798, 26899, 8370, 17076, 19322, 8734, 1308, 15840, 21292, 1493, 26184, 25897, 6864]
 
 CONTAGION = 0.8
 LETHALITY = .15
@@ -265,35 +318,58 @@ if __name__ == "__main__":
     #########################
 
     # Building Graphs
-    # G1 = build_graph(filename=filename_1)
-    # G2 = build_graph(filename=filename_2)
+    G1 = build_graph(filename=filename_1)
+    G2 = build_graph(filename=filename_2)
     G3 = build_graph(filename=filename_3)
 
-    # # Q2 Calculating degree histograms
-    # histogram_1 = calc_degree_histogram(G1)
-    # histogram_2 = calc_degree_histogram(G2)
-    # histogram_3 = calc_degree_histogram(G3)
-    #
-    # # Q3 Plotting degree histograms
+    # Q2 Calculating degree histograms
+    histogram_1 = calc_degree_histogram(G1)
+    histogram_2 = calc_degree_histogram(G2)
+    histogram_3 = calc_degree_histogram(G3)
+
+    # Q3 Plotting degree histograms
     # plot_degree_histogram(histogram_1)
     # plot_degree_histogram(histogram_2)
     # plot_degree_histogram(histogram_3)
-    #
-    # # Q5 Calculating clustering coefficient
+
+    # Q5 Calculating clustering coefficient
     # print(clustering_coefficient(G1))
     # print(clustering_coefficient(G2))
-    #
-    # #########################
-    # ######## PART B #########
-    # #########################
-    #
-    # # Q5 Calculating and plotting lethality effect
+
+    #########################
+    ######## PART B #########
+    #########################
+
+    # Q5 Calculating and plotting lethality effect
     # mean_deaths, mean_infections = compute_lethality_effect(G3, 6)
     # plot_lethality_effect(mean_deaths, mean_infections)
 
+    # Part B tests
+
+    # LTM
+    # CONTAGION = 1
+    # print(len(LTM(G3, patients0[:50], 6)))
+    # print(len(LTM(G3, patients0[:48], 6)))
+    # print(len(LTM(G3, patients0[:30], 6)))
+    #
+    # CONTAGION = 1.05
+    # print(len(LTM(G3, patients0[:30], 6)))
+    # print(len(LTM(G3, patients0[:20], 6)))
+    #
+    # ICM
+    # CONTAGION = 0.8
+    # LETHALITY = 0.2
+    # infected, deceased = ICM(G3, patients0[:50], 6)
+    # print(len(infected), len(deceased))
+    # infected, deceased = ICM(G3, patients0[:20], 4)
+    # print(len(infected), len(deceased))
+    # print()
+
     # clustering_coefficients = networkx.clustering(G3)
-    # clustering_coefficients_0 = {c: clustering_coefficients[c] for c in clustering_coefficients if clustering_coefficients[c] == 0}
-    # clustering_coefficients_01 = {c: clustering_coefficients[c] for c in clustering_coefficients if clustering_coefficients[c] < 0.1 and clustering_coefficients[c] > 0}
+    # clustering_coefficients_0 = {c: clustering_coefficients[c] for c in clustering_coefficients if
+    #                              clustering_coefficients[c] == 0}
+    # clustering_coefficients_01 = {c: clustering_coefficients[c] for c in clustering_coefficients if
+    #                               clustering_coefficients[c] < 0.1 and clustering_coefficients[c] > 0}
     # # plt.hist(clustering_coefficients)
     # # plt.show()
     # degrees = networkx.degree(G3)
@@ -303,36 +379,6 @@ if __name__ == "__main__":
     # # plt.show()
     # # plt.hist(degrees_01.values())
     # # plt.show()
-    # # print(np.mean(list(degrees_0.values())))
-    # # print(np.mean(list(degrees_01.values())))
-    #
-    # iters = 15
-    # num_0 = 50
-    #
-    # for upper_bound in [0, 0.01, 0.025, 0.05, 0.1, 0.5]:
-    #     for lower_bound in [-1, 0, 0.01, 0.025, 0.05, 0.1, 0.5]:
-    #         if lower_bound < upper_bound:
-    #             filtered_coefficients = {c: clustering_coefficients[c] for c in clustering_coefficients if clustering_coefficients[c] <= upper_bound and clustering_coefficients[c] > lower_bound}
-    #             filtered_degrees = {c: degrees[c] for c in filtered_coefficients}
-    #             top_50 = sorted(filtered_degrees.keys(), key=lambda x: filtered_degrees[x], reverse=True)[:50]
-    #
-    #             np.random.seed(0)
-    #
-    #             mean_infected = 0
-    #             mean_deceased = 0
-    #             for _ in range(iters):
-    #                 clone = G3.copy()
-    #                 # to_remove = len(clone.nodes) - subgraph_size
-    #                 # subgraph_nodes = np.random.choice(list(clone.nodes), size=to_remove, replace=False, p=None)
-    #                 # clone.remove_nodes_from(subgraph_nodes)
-    #
-    #                 clone.remove_nodes_from(top_50)
-    #
-    #                 patients_0 = np.random.choice(list(clone.nodes), size=num_0, replace=False, p=None)
-    #                 infected, deceased = ICM(clone, patients_0, 6)
-    #                 mean_infected += len(infected) / iters
-    #                 mean_deceased += len(deceased) / iters
-    #
-    #             print(lower_bound, upper_bound, mean_infected, mean_deceased)
 
+    best_50 = choose_who_to_vaccinate(G3)
 
