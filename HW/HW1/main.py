@@ -216,7 +216,7 @@ def choose_who_to_vaccinate(graph: networkx.Graph) -> List:
     clustering_coefficients = networkx.clustering(graph)
     degrees = networkx.degree(graph)
 
-    for upper_bound in [0.03, 0.035, 0.04, 0.045, 0.05, 0.055, 0.06]:
+    for upper_bound in [0.02, 0.025, 0.03, 0.035, 0.04, 0.045, 0.05, 0.055]:
         if time.time() - start > time_threshold:
             return best_50
         filtered_coefficients = {c: clustering_coefficients[c] for c in clustering_coefficients if
