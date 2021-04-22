@@ -365,3 +365,4 @@ if __name__ == "__main__":
     #########################
 
     best_50 = choose_who_to_vaccinate(G3)
+    print(f"Best 50 to vaccinate in G3: {best_50}")
