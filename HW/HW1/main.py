@@ -329,8 +329,8 @@ if __name__ == "__main__":
     plot_degree_histogram(histogram_3)
 
     # Q5 Calculating clustering coefficient
-    print(clustering_coefficient(G1))
-    print(clustering_coefficient(G2))
+    print(f"Clustering coefficient of G1: {clustering_coefficient(G1)}")
+    print(f"Clustering coefficient of G2: {clustering_coefficient(G2)}")
 
     #########################
     ######## PART B #########
@@ -344,6 +344,7 @@ if __name__ == "__main__":
 
     # LTM
     # CONTAGION = 1
+    print(f"LTM check:")
     print(len(LTM(G3, patients0[:50], 6)))
     print(len(LTM(G3, patients0[:48], 6)))
     print(len(LTM(G3, patients0[:30], 6)))
@@ -355,6 +356,7 @@ if __name__ == "__main__":
     # ICM
     CONTAGION = 0.8
     LETHALITY = 0.2
+    print(f"ICM check:")
     infected, deceased = ICM(G3, patients0[:50], 6)
     print(len(infected), len(deceased))
     infected, deceased = ICM(G3, patients0[:20], 4)
@@ -363,6 +365,6 @@ if __name__ == "__main__":
     #########################
     ######## PART C #########
     #########################
-
+    print(f"Part C:")
     best_50 = choose_who_to_vaccinate(G3)
     print(f"Best 50 to vaccinate in G3: {best_50}")
