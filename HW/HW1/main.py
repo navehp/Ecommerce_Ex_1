@@ -244,7 +244,7 @@ def choose_who_to_vaccinate(graph: networkx.Graph) -> List:
     filtered_coefficients = {c: clustering_coefficients[c] for c in clustering_coefficients if
                              clustering_coefficients[c] <= best_upper_bound and clustering_coefficients[c] > lower_bound}
     filtered_degrees = {c: degrees[c] for c in filtered_coefficients}
-    top_150 = sorted(filtered_degrees.keys(), key=lambda x: filtered_degrees[x], reverse=True)[:55]
+    top_150 = sorted(filtered_degrees.keys(), key=lambda x: filtered_degrees[x], reverse=True)[:80]
     top_150_degrees = [filtered_degrees[node] for node in top_150]
     weights = np.exp(top_150_degrees) / np.sum(np.exp(top_150_degrees), axis=0)
 
@@ -309,10 +309,6 @@ if __name__ == "__main__":
     filename_2 = "PartA2.csv"
     filename_3 = "PartB-C.csv"
 
-    # filename_1 = "./HW/HW1/PartA1.csv"
-    # filename_2 = "./HW/HW1/PartA2.csv"
-    # filename_3 = "./HW/HW1/PartB-C.csv"
-
     #########################
     ######## PART A #########
     #########################
@@ -328,57 +324,44 @@ if __name__ == "__main__":
     histogram_3 = calc_degree_histogram(G3)
 
     # Q3 Plotting degree histograms
-    # plot_degree_histogram(histogram_1)
-    # plot_degree_histogram(histogram_2)
-    # plot_degree_histogram(histogram_3)
+    plot_degree_histogram(histogram_1)
+    plot_degree_histogram(histogram_2)
+    plot_degree_histogram(histogram_3)
 
     # Q5 Calculating clustering coefficient
-    # print(clustering_coefficient(G1))
-    # print(clustering_coefficient(G2))
+    print(clustering_coefficient(G1))
+    print(clustering_coefficient(G2))
 
     #########################
     ######## PART B #########
     #########################
 
     # Q5 Calculating and plotting lethality effect
-    # mean_deaths, mean_infections = compute_lethality_effect(G3, 6)
-    # plot_lethality_effect(mean_deaths, mean_infections)
+    mean_deaths, mean_infections = compute_lethality_effect(G3, 6)
+    plot_lethality_effect(mean_deaths, mean_infections)
 
     # Part B tests
 
     # LTM
     # CONTAGION = 1
-    # print(len(LTM(G3, patients0[:50], 6)))
-    # print(len(LTM(G3, patients0[:48], 6)))
-    # print(len(LTM(G3, patients0[:30], 6)))
+    print(len(LTM(G3, patients0[:50], 6)))
+    print(len(LTM(G3, patients0[:48], 6)))
+    print(len(LTM(G3, patients0[:30], 6)))
     #
     # CONTAGION = 1.05
-    # print(len(LTM(G3, patients0[:30], 6)))
-    # print(len(LTM(G3, patients0[:20], 6)))
-    #
-    # ICM
-    # CONTAGION = 0.8
-    # LETHALITY = 0.2
-    # infected, deceased = ICM(G3, patients0[:50], 6)
-    # print(len(infected), len(deceased))
-    # infected, deceased = ICM(G3, patients0[:20], 4)
-    # print(len(infected), len(deceased))
-    # print()
+    print(len(LTM(G3, patients0[:30], 6)))
+    print(len(LTM(G3, patients0[:20], 6)))
 
-    # clustering_coefficients = networkx.clustering(G3)
-    # clustering_coefficients_0 = {c: clustering_coefficients[c] for c in clustering_coefficients if
-    #                              clustering_coefficients[c] == 0}
-    # clustering_coefficients_01 = {c: clustering_coefficients[c] for c in clustering_coefficients if
-    #                               clustering_coefficients[c] < 0.1 and clustering_coefficients[c] > 0}
-    # # plt.hist(clustering_coefficients)
-    # # plt.show()
-    # degrees = networkx.degree(G3)
-    # degrees_0 = {c: degrees[c] for c in clustering_coefficients_0}
-    # degrees_01 = {c: degrees[c] for c in clustering_coefficients_01}
-    # # plt.hist(degrees_0.values())
-    # # plt.show()
-    # # plt.hist(degrees_01.values())
-    # # plt.show()
+    # ICM
+    CONTAGION = 0.8
+    LETHALITY = 0.2
+    infected, deceased = ICM(G3, patients0[:50], 6)
+    print(len(infected), len(deceased))
+    infected, deceased = ICM(G3, patients0[:20], 4)
+    print(len(infected), len(deceased))
+
+    #########################
+    ######## PART C #########
+    #########################
 
     best_50 = choose_who_to_vaccinate(G3)
-
