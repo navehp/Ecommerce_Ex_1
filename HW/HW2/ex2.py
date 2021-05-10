@@ -67,8 +67,34 @@ class NeighborhoodRecommender(Recommender):
 
 
 class LSRecommender(Recommender):
+
     def initialize_predictor(self, ratings: pd.DataFrame):
-        pass
+        self.b_d_lambda = lambda timestamp: int(6 <= datetime.fromtimestamp(timestamp).hour < 18)
+        self.b_n_lambda = lambda timestamp: int(1 - b_d_lambda(timestamp))
+        self.b_w_lambda = lambda timestamp: int(datetime.fromtimestamp(timestamp).weekday() in [4, 5])
+
+        self.U = ratings['user'].nununique()
+        self.I = ratings['item'].nununique()
+
+        self.X = np.zeros((len(ratings.index), self.U+self.I+3))
+
+        self.R = np.zeros((self.U, self.I))
+
+
+        for index, columns in ratings.iterrows():
+
+            self.X[index, columns.loc['user'] - 1] = 1
+            self.X[index, self.U + columns.loc['item'] - 1] = 1
+            self.X[index, -3] = self.b_d_lambda(columns.loc['timestamp'])
+            self.X[index, -2] = self.b_n_lambda(columns.loc['timestamp'])
+            self.X[index, -1] = self.b_w_lambda(columns.loc['timestamp'])
+
+            self.R[columns.loc['user'] - 1, columns.loc['item'] - 1] = columns.loc['rating']
+
+
+        self.y = self.R - ratings['rating'].mean()
+
+
 
     def predict(self, user: int, item: int, timestamp: int) -> float:
         """
@@ -77,14 +103,27 @@ class LSRecommender(Recommender):
         :param timestamp: Rating timestamp
         :return: Predicted rating of the user for the item
         """
-        pass
+
+        user_vec = np.array((self.U + self.I + 3, 1))
+
+        user_vec[user - 1] = 1
+        user_vec[self.U + item - 1] = 1
+        user_vec[-3] = self.b_d_lambda(timestamp)
+        user_vec[-2] = self.b_n_lambda(timestamp)
+        user_vec[-1] = self.b_w_lambda(timestamp)
+
+        return self.beta @ user_vec
+
 
     def solve_ls(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Creates and solves the least squares regression
         :return: Tuple of X, b, y such that b is the solution to min ||Xb-y||
         """
-        pass
+
+        self.beta = np.linalg.lstsq(self.X, self.y)
+
+        return (self.X, self.beta, self.y)
 
 
 class CompetitionRecommender(Recommender):
@@ -99,3 +138,17 @@ class CompetitionRecommender(Recommender):
         :return: Predicted rating of the user for the item
         """
         pass
+
+
+if __name__ == '__main__':
+    from datetime import datetime
+
+    datetimeexamples = [835355664, 835355532, 1260759205, 949949538]
+
+
+
+    for datetimeexample in datetimeexamples:
+        print(datetime.fromtimestamp(datetimeexample))
+        print(b_d_lambda(datetimeexample))
+        print(b_n_lambda(datetimeexample))
+        print(b_w_lambda(datetimeexample))
