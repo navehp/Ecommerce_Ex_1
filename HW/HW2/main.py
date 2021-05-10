@@ -53,6 +53,8 @@ def main():
     # print(baseline_recommender.rmse(test))
     # neighborhood_recommender = ex2.NeighborhoodRecommender(train)
     # print(neighborhood_recommender.rmse(test))
+
+
     ls_recommender = ex2.LSRecommender(train)
     ls_recommender.solve_ls()
     print(ls_recommender.rmse(test))

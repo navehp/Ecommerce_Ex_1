@@ -2,7 +2,7 @@ import abc
 from typing import Tuple
 import pandas as pd
 import numpy as np
-
+from datetime import datetime
 
 class Recommender(abc.ABC):
     def __init__(self, ratings: pd.DataFrame):
@@ -27,7 +27,10 @@ class Recommender(abc.ABC):
         :param true_ratings: DataFrame of the real ratings
         :return: RMSE score
         """
-        pass
+
+        return np.sqrt(np.average([columns.loc['rating'] - self.predict(int(columns.loc['user']), int(columns.loc['item']), int(columns.loc['timestamp'])) for _, columns in true_ratings.iterrows()]))
+
+
 
 
 class BaselineRecommender(Recommender):
@@ -70,26 +73,29 @@ class LSRecommender(Recommender):
 
     def initialize_predictor(self, ratings: pd.DataFrame):
         self.b_d_lambda = lambda timestamp: int(6 <= datetime.fromtimestamp(timestamp).hour < 18)
-        self.b_n_lambda = lambda timestamp: int(1 - b_d_lambda(timestamp))
+        self.b_n_lambda = lambda timestamp: int(1 - self.b_d_lambda(timestamp))
         self.b_w_lambda = lambda timestamp: int(datetime.fromtimestamp(timestamp).weekday() in [4, 5])
 
-        self.U = ratings['user'].nununique()
-        self.I = ratings['item'].nununique()
+        self.U = ratings['user'].nunique()
+        self.I = ratings['item'].nunique()
 
         self.X = np.zeros((len(ratings.index), self.U+self.I+3))
-
-        self.R = np.zeros((self.U, self.I))
+        self.R = np.zeros((len(ratings.index), 1))
 
 
         for index, columns in ratings.iterrows():
 
-            self.X[index, columns.loc['user'] - 1] = 1
-            self.X[index, self.U + columns.loc['item'] - 1] = 1
-            self.X[index, -3] = self.b_d_lambda(columns.loc['timestamp'])
-            self.X[index, -2] = self.b_n_lambda(columns.loc['timestamp'])
-            self.X[index, -1] = self.b_w_lambda(columns.loc['timestamp'])
+            user_ind = int(columns.loc['user'])
+            item_ind = int(columns.loc['item'])
+            timestamp = columns.loc['timestamp']
 
-            self.R[columns.loc['user'] - 1, columns.loc['item'] - 1] = columns.loc['rating']
+            self.X[index, user_ind] = 1
+            self.X[index, self.U + item_ind] = 1
+            self.X[index, -3] = self.b_d_lambda(timestamp)
+            self.X[index, -2] = self.b_n_lambda(timestamp)
+            self.X[index, -1] = self.b_w_lambda(timestamp)
+
+            self.R[index, 0] = columns.loc['rating']
 
 
         self.y = self.R - ratings['rating'].mean()
@@ -104,15 +110,19 @@ class LSRecommender(Recommender):
         :return: Predicted rating of the user for the item
         """
 
-        user_vec = np.array((self.U + self.I + 3, 1))
+        user_vec = np.zeros((self.U + self.I + 3, 1))
 
-        user_vec[user - 1] = 1
-        user_vec[self.U + item - 1] = 1
+        user_vec[user] = 1
+        user_vec[self.U + item] = 1
         user_vec[-3] = self.b_d_lambda(timestamp)
         user_vec[-2] = self.b_n_lambda(timestamp)
         user_vec[-1] = self.b_w_lambda(timestamp)
 
-        return self.beta @ user_vec
+        prediction = (self.beta.T @ user_vec)[0][0]
+
+        # assert 0.5 <= prediction <= 5
+
+        return prediction
 
 
     def solve_ls(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -121,7 +131,7 @@ class LSRecommender(Recommender):
         :return: Tuple of X, b, y such that b is the solution to min ||Xb-y||
         """
 
-        self.beta = np.linalg.lstsq(self.X, self.y)
+        self.beta = np.linalg.lstsq(self.X, self.y, rcond=None)[0]
 
         return (self.X, self.beta, self.y)
 
@@ -140,15 +150,15 @@ class CompetitionRecommender(Recommender):
         pass
 
 
-if __name__ == '__main__':
-    from datetime import datetime
-
-    datetimeexamples = [835355664, 835355532, 1260759205, 949949538]
-
-
-
-    for datetimeexample in datetimeexamples:
-        print(datetime.fromtimestamp(datetimeexample))
-        print(b_d_lambda(datetimeexample))
-        print(b_n_lambda(datetimeexample))
-        print(b_w_lambda(datetimeexample))
+# if __name__ == '__main__':
+#     from datetime import datetime
+#
+#     datetimeexamples = [835355664, 835355532, 1260759205, 949949538]
+#
+#
+#
+#     for datetimeexample in datetimeexamples:
+#         print(datetime.fromtimestamp(datetimeexample))
+#         print(b_d_lambda(datetimeexample))
+#         print(b_n_lambda(datetimeexample))
+#         print(b_w_lambda(datetimeexample))
