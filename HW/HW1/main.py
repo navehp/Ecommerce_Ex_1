@@ -235,8 +235,8 @@ def choose_who_to_vaccinate(graph: networkx.Graph) -> List:
             mean_infected += len(infected) / iters
 
         if mean_infected < best_mean_infected:
-            print(mean_infected)
-            print(upper_bound)
+            # print(mean_infected)
+            # print(upper_bound)
             best_mean_infected = mean_infected
             best_upper_bound = upper_bound
             best_50 = top_50
@@ -248,7 +248,6 @@ def choose_who_to_vaccinate(graph: networkx.Graph) -> List:
     top_150_degrees = [filtered_degrees[node] for node in top_150]
     weights = np.exp(top_150_degrees) / np.sum(np.exp(top_150_degrees), axis=0)
 
-    print('started sampling')
     while time.time() - start < time_threshold:
         to_remove = np.random.choice(top_150, 50, p=weights, replace=False)
         clone = G3.copy()
@@ -263,7 +262,7 @@ def choose_who_to_vaccinate(graph: networkx.Graph) -> List:
             mean_infected += len(infected) / sampling_iters
 
         if mean_infected < best_mean_infected:
-            print(mean_infected)
+            # print(mean_infected)
             best_mean_infected = mean_infected
             best_50 = to_remove
 
@@ -329,8 +328,8 @@ if __name__ == "__main__":
     plot_degree_histogram(histogram_3)
 
     # Q5 Calculating clustering coefficient
-    print(clustering_coefficient(G1))
-    print(clustering_coefficient(G2))
+    print(f"Clustering coefficient of G1: {clustering_coefficient(G1)}")
+    print(f"Clustering coefficient of G2: {clustering_coefficient(G2)}")
 
     #########################
     ######## PART B #########
@@ -343,18 +342,21 @@ if __name__ == "__main__":
     # Part B tests
 
     # LTM
-    # CONTAGION = 1
+    print(f"LTM check:")
+
+    CONTAGION = 1
     print(len(LTM(G3, patients0[:50], 6)))
     print(len(LTM(G3, patients0[:48], 6)))
     print(len(LTM(G3, patients0[:30], 6)))
-    #
-    # CONTAGION = 1.05
+
+    CONTAGION = 1.05
     print(len(LTM(G3, patients0[:30], 6)))
     print(len(LTM(G3, patients0[:20], 6)))
 
     # ICM
     CONTAGION = 0.8
     LETHALITY = 0.2
+    print(f"ICM check:")
     infected, deceased = ICM(G3, patients0[:50], 6)
     print(len(infected), len(deceased))
     infected, deceased = ICM(G3, patients0[:20], 4)
@@ -363,5 +365,6 @@ if __name__ == "__main__":
     #########################
     ######## PART C #########
     #########################
-
+    print(f"Part C:")
     best_50 = choose_who_to_vaccinate(G3)
+    print(f"Best 50 to vaccinate in G3: {best_50}")

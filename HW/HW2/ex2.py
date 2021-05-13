@@ -2,6 +2,7 @@ import abc
 from typing import Tuple
 import pandas as pd
 import numpy as np
+from datetime import datetime
 
 from sklearn.metrics.pairwise import cosine_similarity
 
@@ -107,14 +108,31 @@ class LSRecommender(Recommender):
         :param timestamp: Rating timestamp
         :return: Predicted rating of the user for the item
         """
-        pass
+
+        user_vec = np.zeros((self.U + self.I + 3, 1))
+
+        user_vec[user] = 1
+        user_vec[self.U + item] = 1
+        user_vec[-3] = self.b_d_lambda(timestamp)
+        user_vec[-2] = self.b_n_lambda(timestamp)
+        user_vec[-1] = self.b_w_lambda(timestamp)
+
+        prediction = (self.beta.T @ user_vec)[0][0]
+
+        # assert 0.5 <= prediction <= 5
+
+        return prediction
+
 
     def solve_ls(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Creates and solves the least squares regression
         :return: Tuple of X, b, y such that b is the solution to min ||Xb-y||
         """
-        pass
+
+        self.beta = np.linalg.lstsq(self.X, self.y, rcond=None)[0]
+
+        return (self.X, self.beta, self.y)
 
 
 class CompetitionRecommender(Recommender):
@@ -129,3 +147,17 @@ class CompetitionRecommender(Recommender):
         :return: Predicted rating of the user for the item
         """
         pass
+
+
+# if __name__ == '__main__':
+#     from datetime import datetime
+#
+#     datetimeexamples = [835355664, 835355532, 1260759205, 949949538]
+#
+#
+#
+#     for datetimeexample in datetimeexamples:
+#         print(datetime.fromtimestamp(datetimeexample))
+#         print(b_d_lambda(datetimeexample))
+#         print(b_n_lambda(datetimeexample))
+#         print(b_w_lambda(datetimeexample))
