@@ -3,6 +3,10 @@ import pandas as pd
 import numpy as np
 import time
 
+# TODO delete
+from sklearn.neural_network import MLPRegressor
+from sklearn.model_selection import train_test_split
+
 
 def transform(ratings, min_items=5, min_users=7):
     """
@@ -57,9 +61,9 @@ def main():
     ls_recommender.solve_ls()
     print(ls_recommender.rmse(test))
 
-    # ratings_comp = pd.read_csv('ratings_comp.csv')
-    # comp_recommender = ex2.CompetitionRecommender(ratings_comp)
-    # print(comp_recommender.rmse(test_comp))
+    ratings_comp = pd.read_csv('ratings_comp.csv')
+    comp_recommender = ex2.CompetitionRecommender(ratings_comp)
+    print(comp_recommender.rmse(test_comp))
 
     print(f'Took {time.time() - start:.2f}s')
 
@@ -73,7 +77,31 @@ if __name__ == '__main__':
     train, test = train_test_split(ratings)
     start = time.time()
 
-    baseline_recommender = ex2.BaselineRecommender(train)
-    print(baseline_recommender.rmse(test))
-    neighborhood_recommender = ex2.NeighborhoodRecommender(train)
-    print(neighborhood_recommender.rmse(test))
+    # print("Calculating Baseline")
+    # baseline_recommender = ex2.BaselineRecommender(train)
+    # print(baseline_recommender.rmse(test))
+    # print("Calculating Neighborhood")
+    # neighborhood_recommender = ex2.NeighborhoodRecommender(train)
+    # print(neighborhood_recommender.rmse(test))
+    # print('Calculating LS')
+    # ls_recommender = ex2.LSRecommender(train)
+    # ls_recommender.solve_ls()
+    # print(ls_recommender.rmse(test))
+
+    ratings_comp = pd.read_csv('ratings_comp.csv')
+    train_comp, dev_comp = train_test_split(ratings_comp)
+    models = [
+        MLPRegressor(random_state=1, max_iter=1),
+        MLPRegressor(random_state=1, max_iter=200),
+        MLPRegressor(random_state=1, max_iter=100, hidden_layer_sizes=(100, 100, 100)),
+        MLPRegressor(random_state=1, max_iter=100, alpha=0.001),
+        MLPRegressor(random_state=1, max_iter=100, learning_rate=['adaptive'])
+    ]
+
+    for model in models:
+        comp_recommender = ex2.CompetitionRecommender(train_comp, model)
+        start = time.time()
+        print(model)
+        print(comp_recommender.rmse(dev_comp))
+        print(f"time: {time.time() - start}")
+        print()

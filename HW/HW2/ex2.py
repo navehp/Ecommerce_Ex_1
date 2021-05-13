@@ -5,11 +5,14 @@ import numpy as np
 from datetime import datetime
 
 from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.neural_network import MLPRegressor
 
 
 class Recommender(abc.ABC):
-    def __init__(self, ratings: pd.DataFrame):
-        self.initialize_predictor(ratings)
+
+    # todo delete args
+    def __init__(self, ratings: pd.DataFrame, *args):
+        self.initialize_predictor(ratings *args)
 
     @abc.abstractmethod
     def initialize_predictor(self, ratings: pd.DataFrame):
@@ -48,10 +51,10 @@ class BaselineRecommender(Recommender):
         :param timestamp: Rating timestamp
         :return: Predicted rating of the user for the item
         """
-        p = self.R_hat + self.b_u[user] + self.b_i[item]
-        if p < 0.5 or 5 < p:
-            print(1, p)
-        return self.R_hat + self.b_u[user] + self.b_i[item]
+        prediction = self.R_hat + self.b_u[user] + self.b_i[item]
+        prediction = max(0.5, prediction)
+        prediction = min(5, prediction)
+        return prediction
 
 
 class NeighborhoodRecommender(Recommender):
@@ -83,10 +86,10 @@ class NeighborhoodRecommender(Recommender):
             if len(rating) > 0:
                 neighbors_arg += correlation * float(rating)
             correlations_sum += np.abs(correlation)
-        p = self.R_hat + self.b_u[user] + self.b_i[item] + neighbors_arg / correlations_sum
-        if p < 0.5 or 5 < p:
-            print(p)
-        return self.R_hat + self.b_u[user] + self.b_i[item] + neighbors_arg / correlations_sum
+        prediction = self.R_hat + self.b_u[user] + self.b_i[item] + neighbors_arg / correlations_sum
+        prediction = max(0.5, prediction)
+        prediction = min(5, prediction)
+        return prediction
 
     def user_similarity(self, user1: int, user2: int) -> float:
         """
@@ -98,8 +101,27 @@ class NeighborhoodRecommender(Recommender):
 
 
 class LSRecommender(Recommender):
+
     def initialize_predictor(self, ratings: pd.DataFrame):
-        pass
+        self.b_d_lambda = lambda timestamp: int(6 <= datetime.fromtimestamp(timestamp).hour < 18)
+        self.b_n_lambda = lambda timestamp: int(1 - self.b_d_lambda(timestamp))
+        self.b_w_lambda = lambda timestamp: int(datetime.fromtimestamp(timestamp).weekday() in [4, 5])
+        day = ratings.timestamp.apply(self.b_d_lambda)
+        night = ratings.timestamp.apply(self.b_n_lambda)
+        weekend = ratings.timestamp.apply(self.b_w_lambda)
+
+        self.X = pd.get_dummies(ratings.user, prefix='user')
+        self.X = pd.concat([self.X, pd.get_dummies(ratings.item, prefix='item')], axis=1)
+        self.X['b_d'] = day
+        self.X['b_n'] = night
+        self.X['b_w'] = weekend
+        self.X['bias'] = pd.Series(np.ones(len(ratings)))
+
+        columns_list = list(self.X.columns)
+        self.column2ind = {col: columns_list.index(col) for col in columns_list}
+
+        self.R_hat = ratings['rating'].mean()
+        self.y = ratings.rating - self.R_hat
 
     def predict(self, user: int, item: int, timestamp: int) -> float:
         """
@@ -108,18 +130,19 @@ class LSRecommender(Recommender):
         :param timestamp: Rating timestamp
         :return: Predicted rating of the user for the item
         """
+        user_vector = np.zeros(len(self.X.columns))
 
-        user_vec = np.zeros((self.U + self.I + 3, 1))
+        user_vector[self.column2ind[f'user_{float(user)}']] = 1
+        user_vector[self.column2ind[f'item_{float(item)}']] = 1
+        user_vector[self.column2ind[f'b_d']] = self.b_d_lambda(timestamp)
+        user_vector[self.column2ind[f'b_n']] = self.b_n_lambda(timestamp)
+        user_vector[self.column2ind[f'b_w']] = self.b_w_lambda(timestamp)
+        user_vector[self.column2ind[f'bias']] = 1
 
-        user_vec[user] = 1
-        user_vec[self.U + item] = 1
-        user_vec[-3] = self.b_d_lambda(timestamp)
-        user_vec[-2] = self.b_n_lambda(timestamp)
-        user_vec[-1] = self.b_w_lambda(timestamp)
+        prediction = (self.beta.T @ user_vector) + self.R_hat
 
-        prediction = (self.beta.T @ user_vec)[0][0]
-
-        # assert 0.5 <= prediction <= 5
+        prediction = max(0.5, prediction)
+        prediction = min(5.0, prediction)
 
         return prediction
 
@@ -134,10 +157,46 @@ class LSRecommender(Recommender):
 
         return (self.X, self.beta, self.y)
 
+# TODO inherit from abstract class and delete rmse
 
-class CompetitionRecommender(Recommender):
-    def initialize_predictor(self, ratings: pd.DataFrame):
-        pass
+class CompetitionRecommender():
+
+    def __init__(self, ratings, model):
+        self.initialize_predictor(ratings, model)
+
+    def rmse(self, true_ratings) -> float:
+        """
+        :param true_ratings: DataFrame of the real ratings
+        :return: RMSE score
+        """
+        r = true_ratings['rating']
+        p = true_ratings.apply(lambda x: self.predict(int(x['user']), int(x['item']), x['timestamp']), axis=1)
+        return np.sqrt(((r - p) ** 2).sum() / len(r))
+
+    def initialize_predictor(self, ratings: pd.DataFrame, model):
+        self.b_d_lambda = lambda timestamp: int(6 <= datetime.fromtimestamp(timestamp).hour < 18)
+        self.b_n_lambda = lambda timestamp: int(1 - self.b_d_lambda(timestamp))
+        self.b_w_lambda = lambda timestamp: int(datetime.fromtimestamp(timestamp).weekday() in [4, 5])
+        day = ratings.timestamp.apply(self.b_d_lambda)
+        night = ratings.timestamp.apply(self.b_n_lambda)
+        weekend = ratings.timestamp.apply(self.b_w_lambda)
+
+        self.X = pd.get_dummies(ratings.user, prefix='user')
+        self.X = pd.concat([self.X, pd.get_dummies(ratings.item, prefix='item')], axis=1)
+        self.X['b_d'] = day
+        self.X['b_n'] = night
+        self.X['b_w'] = weekend
+        self.X['bias'] = pd.Series(np.ones(len(ratings)))
+
+        columns_list = list(self.X.columns)
+        self.column2ind = {col: columns_list.index(col) for col in columns_list}
+
+        self.R_hat = ratings['rating'].mean()
+        self.y = ratings.rating - self.R_hat
+
+        print("fitting")
+        self.model = model.fit(self.X, self.y)
+        print("finished fitting")
 
     def predict(self, user: int, item: int, timestamp: int) -> float:
         """
@@ -146,7 +205,21 @@ class CompetitionRecommender(Recommender):
         :param timestamp: Rating timestamp
         :return: Predicted rating of the user for the item
         """
-        pass
+        user_vector = np.zeros(len(self.X.columns))
+
+        user_vector[self.column2ind[f'user_{float(user)}']] = 1
+        user_vector[self.column2ind[f'item_{float(item)}']] = 1
+        user_vector[self.column2ind[f'b_d']] = self.b_d_lambda(timestamp)
+        user_vector[self.column2ind[f'b_n']] = self.b_n_lambda(timestamp)
+        user_vector[self.column2ind[f'b_w']] = self.b_w_lambda(timestamp)
+        user_vector[self.column2ind[f'bias']] = 1
+
+        prediction = self.model.predict(user_vector.reshape(1, -1))[0] + self.R_hat
+
+        prediction = max(0.5, prediction)
+        prediction = min(5.0, prediction)
+
+        return prediction
 
 
 # if __name__ == '__main__':
