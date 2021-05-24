@@ -1,13 +1,16 @@
 import abc
+import pickle
 from typing import Tuple
 import pandas as pd
 import numpy as np
 from datetime import datetime
 import scipy.sparse
-import sklearn.neural_network
+from sklearn import linear_model
 
 from sklearn.neural_network import MLPRegressor
 from tqdm import tqdm
+import time
+from pickle import load, dump
 
 
 class Recommender(abc.ABC):
@@ -163,7 +166,6 @@ class LSRecommender(Recommender):
         :return: Predicted rating of the user for the item
         """
         user_vector = np.zeros(len(self.X.columns))
-
         user_vector[self.column2ind[f'user_{float(user)}']] = 1
         user_vector[self.column2ind[f'item_{float(item)}']] = 1
         user_vector[self.column2ind[f'b_d']] = self.b_d_lambda(timestamp)
@@ -228,9 +230,16 @@ class CompetitionRecommender():
         self.R_hat = ratings['rating'].mean()
         self.y = ratings.rating - self.R_hat
 
-        self.create_sparse_matrix()
-        self.model = sklearn.neural_network.MLPRegressor(max_iter=50).fit(self.sparse_ratings, self.y)
-        print("Fitted Model")
+        # self.create_sparse_matrix()
+        # with open('sparse_matrix.pickle', 'wb') as f:
+        #     pickle.dump(self.sparse_ratings, f)
+        with open('sparse_matrix.pickle', 'rb') as f:
+            self.sparse_ratings = pickle.load(f)
+        print("Processed Data")
+        start = time.time()
+        self.model = linear_model.LassoCV().fit(self.sparse_ratings, self.y)
+        print(f"Fitted Model, time: {time.time() - start}")
+        print('Parameters: ', self.model.get_params(), self.model.alpha_ )
 
 
     def predict(self, user: int, item: int, timestamp: int) -> float:
@@ -242,8 +251,10 @@ class CompetitionRecommender():
         """
         user_vector = np.zeros(len(self.users) + len(self.items) + 4)
 
-        user_vector[self.user_indices[user]] = 1
-        user_vector[self.item_indices[item]] = 1
+        if user in self.user_indices:
+            user_vector[self.user_indices[user]] = 1
+        if item in self.item_indices:
+            user_vector[self.item_indices[item]] = 1
         user_vector[self.day_index] = self.b_d_lambda(timestamp)
         user_vector[self.night_index] = self.b_n_lambda(timestamp)
         user_vector[self.weekend_index] = self.b_w_lambda(timestamp)
