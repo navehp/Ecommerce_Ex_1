@@ -323,7 +323,7 @@ class CompetitionRecommender(Recommender):
         :param timestamp: Rating timestamp
         :return: Predicted rating of the user for the item
         """
-        user_vector = np.zeros(len(self.users) + len(self.items) + 27)
+        user_vector = np.zeros(len(self.users) + len(self.items) + 28)
 
         if user in self.user_indices:
             user_vector[self.user_indices[user]] = 1
