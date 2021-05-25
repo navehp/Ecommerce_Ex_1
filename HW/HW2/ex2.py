@@ -204,7 +204,30 @@ class CompetitionRecommender(Recommender):
         self.b_t6_lambda = lambda timestamp: int(15 <= datetime.fromtimestamp(timestamp).hour < 18)
         self.b_t7_lambda = lambda timestamp: int(18 <= datetime.fromtimestamp(timestamp).hour < 21)
         self.b_t8_lambda = lambda timestamp: int(21 <= datetime.fromtimestamp(timestamp).hour)
-        self.b_w_lambda = lambda timestamp: int(datetime.fromtimestamp(timestamp).weekday() in [4, 5])
+
+        self.b_d1_lambda = lambda timestamp: int(datetime.fromtimestamp(timestamp).weekday() == 1)
+        self.b_d2_lambda = lambda timestamp: int(datetime.fromtimestamp(timestamp).weekday() == 2)
+        self.b_d3_lambda = lambda timestamp: int(datetime.fromtimestamp(timestamp).weekday() == 3)
+        self.b_d4_lambda = lambda timestamp: int(datetime.fromtimestamp(timestamp).weekday() == 4)
+        self.b_d5_lambda = lambda timestamp: int(datetime.fromtimestamp(timestamp).weekday() == 5)
+        self.b_d6_lambda = lambda timestamp: int(datetime.fromtimestamp(timestamp).weekday() == 6)
+        self.b_d7_lambda = lambda timestamp: int(datetime.fromtimestamp(timestamp).weekday() == 7)
+
+
+        self.b_m1_lambda = lambda timestamp: int(datetime.fromtimestamp(timestamp).month == 1)
+        self.b_m2_lambda = lambda timestamp: int(datetime.fromtimestamp(timestamp).month == 2)
+        self.b_m3_lambda = lambda timestamp: int(datetime.fromtimestamp(timestamp).month == 3)
+        self.b_m4_lambda = lambda timestamp: int(datetime.fromtimestamp(timestamp).month == 4)
+        self.b_m5_lambda = lambda timestamp: int(datetime.fromtimestamp(timestamp).month == 5)
+        self.b_m6_lambda = lambda timestamp: int(datetime.fromtimestamp(timestamp).month == 6)
+        self.b_m7_lambda = lambda timestamp: int(datetime.fromtimestamp(timestamp).month == 7)
+        self.b_m8_lambda = lambda timestamp: int(datetime.fromtimestamp(timestamp).month == 8)
+        self.b_m9_lambda = lambda timestamp: int(datetime.fromtimestamp(timestamp).month == 9)
+        self.b_m10_lambda = lambda timestamp: int(datetime.fromtimestamp(timestamp).month == 10)
+        self.b_m11_lambda = lambda timestamp: int(datetime.fromtimestamp(timestamp).month == 11)
+        self.b_m12_lambda = lambda timestamp: int(datetime.fromtimestamp(timestamp).month == 12)
+
+
         self.ratings['t1'] = ratings.timestamp.apply(self.b_t1_lambda)
         self.ratings['t2'] = ratings.timestamp.apply(self.b_t2_lambda)
         self.ratings['t3'] = ratings.timestamp.apply(self.b_t3_lambda)
@@ -213,7 +236,29 @@ class CompetitionRecommender(Recommender):
         self.ratings['t6'] = ratings.timestamp.apply(self.b_t6_lambda)
         self.ratings['t7'] = ratings.timestamp.apply(self.b_t7_lambda)
         self.ratings['t8'] = ratings.timestamp.apply(self.b_t8_lambda)
-        self.ratings['weekend'] = ratings.timestamp.apply(self.b_w_lambda)
+
+        self.ratings['d1'] = ratings.timestamp.apply(self.b_d1_lambda)
+        self.ratings['d2'] = ratings.timestamp.apply(self.b_d2_lambda)
+        self.ratings['d3'] = ratings.timestamp.apply(self.b_d3_lambda)
+        self.ratings['d4'] = ratings.timestamp.apply(self.b_d4_lambda)
+        self.ratings['d5'] = ratings.timestamp.apply(self.b_d5_lambda)
+        self.ratings['d6'] = ratings.timestamp.apply(self.b_d6_lambda)
+        self.ratings['d7'] = ratings.timestamp.apply(self.b_d7_lambda)
+
+        self.ratings['m1'] = ratings.timestamp.apply(self.b_m1_lambda)
+        self.ratings['m2'] = ratings.timestamp.apply(self.b_m2_lambda)
+        self.ratings['m3'] = ratings.timestamp.apply(self.b_m3_lambda)
+        self.ratings['m4'] = ratings.timestamp.apply(self.b_m4_lambda)
+        self.ratings['m5'] = ratings.timestamp.apply(self.b_m5_lambda)
+        self.ratings['m6'] = ratings.timestamp.apply(self.b_m6_lambda)
+        self.ratings['m7'] = ratings.timestamp.apply(self.b_m7_lambda)
+        self.ratings['m8'] = ratings.timestamp.apply(self.b_m8_lambda)
+        self.ratings['m9'] = ratings.timestamp.apply(self.b_m9_lambda)
+        self.ratings['m10'] = ratings.timestamp.apply(self.b_m10_lambda)
+        self.ratings['m11'] = ratings.timestamp.apply(self.b_m11_lambda)
+        self.ratings['m12'] = ratings.timestamp.apply(self.b_m12_lambda)
+
+
         self.ratings['bias'] = pd.Series(np.ones(len(ratings)))
 
         self.items = self.ratings.item.unique()
@@ -221,16 +266,38 @@ class CompetitionRecommender(Recommender):
 
         self.user_indices = {user: i for i, user in enumerate(self.users)}
         self.item_indices = {item: len(self.user_indices) + i for i, item in enumerate(self.items)}
-        self.t1_index = len(self.user_indices) + len(self.item_indices)
-        self.t2_index = len(self.user_indices) + len(self.item_indices) + 1
-        self.t3_index = len(self.user_indices) + len(self.item_indices) + 2
-        self.t4_index = len(self.user_indices) + len(self.item_indices) + 3
-        self.t5_index = len(self.user_indices) + len(self.item_indices) + 4
-        self.t6_index = len(self.user_indices) + len(self.item_indices) + 5
-        self.t7_index = len(self.user_indices) + len(self.item_indices) + 6
-        self.t8_index = len(self.user_indices) + len(self.item_indices) + 7
-        self.weekend_index = len(self.user_indices) + len(self.item_indices) + 9
-        self.bias_index = len(self.user_indices) + len(self.item_indices) + 10
+
+        self.bias_index = len(self.user_indices) + len(self.item_indices)
+
+        self.t1_index = len(self.user_indices) + len(self.item_indices) + 1
+        self.t2_index = len(self.user_indices) + len(self.item_indices) + 2
+        self.t3_index = len(self.user_indices) + len(self.item_indices) + 3
+        self.t4_index = len(self.user_indices) + len(self.item_indices) + 4
+        self.t5_index = len(self.user_indices) + len(self.item_indices) + 5
+        self.t6_index = len(self.user_indices) + len(self.item_indices) + 6
+        self.t7_index = len(self.user_indices) + len(self.item_indices) + 7
+        self.t8_index = len(self.user_indices) + len(self.item_indices) + 8
+
+        self.d1_index = len(self.user_indices) + len(self.item_indices) + 1 + 8
+        self.d2_index = len(self.user_indices) + len(self.item_indices) + 2 + 8
+        self.d3_index = len(self.user_indices) + len(self.item_indices) + 3 + 8
+        self.d4_index = len(self.user_indices) + len(self.item_indices) + 4 + 8
+        self.d5_index = len(self.user_indices) + len(self.item_indices) + 5 + 8
+        self.d6_index = len(self.user_indices) + len(self.item_indices) + 6 + 8
+        self.d7_index = len(self.user_indices) + len(self.item_indices) + 7 + 8
+
+        self.m1_index = len(self.user_indices) + len(self.item_indices) + 1 + 15
+        self.m2_index = len(self.user_indices) + len(self.item_indices) + 2 + 15
+        self.m3_index = len(self.user_indices) + len(self.item_indices) + 3 + 15
+        self.m4_index = len(self.user_indices) + len(self.item_indices) + 4 + 15
+        self.m5_index = len(self.user_indices) + len(self.item_indices) + 5 + 15
+        self.m6_index = len(self.user_indices) + len(self.item_indices) + 6 + 15
+        self.m7_index = len(self.user_indices) + len(self.item_indices) + 7 + 15
+        self.m8_index = len(self.user_indices) + len(self.item_indices) + 8 + 15
+        self.m9_index = len(self.user_indices) + len(self.item_indices) + 9 + 15
+        self.m10_index = len(self.user_indices) + len(self.item_indices) + 10 + 15
+        self.m11_index = len(self.user_indices) + len(self.item_indices) + 11 + 15
+        self.m12_index = len(self.user_indices) + len(self.item_indices) + 12 + 15
 
         self.R_hat = ratings['rating'].mean()
         self.y = ratings.rating - self.R_hat
@@ -261,6 +328,9 @@ class CompetitionRecommender(Recommender):
             user_vector[self.user_indices[user]] = 1
         if item in self.item_indices:
             user_vector[self.item_indices[item]] = 1
+
+        user_vector[self.bias_index] = 1
+
         user_vector[self.t1_index] = self.b_t1_lambda(timestamp)
         user_vector[self.t2_index] = self.b_t2_lambda(timestamp)
         user_vector[self.t3_index] = self.b_t3_lambda(timestamp)
@@ -269,8 +339,28 @@ class CompetitionRecommender(Recommender):
         user_vector[self.t6_index] = self.b_t6_lambda(timestamp)
         user_vector[self.t7_index] = self.b_t7_lambda(timestamp)
         user_vector[self.t8_index] = self.b_t8_lambda(timestamp)
-        user_vector[self.weekend_index] = self.b_w_lambda(timestamp)
-        user_vector[self.bias_index] = 1
+
+        user_vector[self.d1_index] = self.b_d1_lambda(timestamp)
+        user_vector[self.d2_index] = self.b_d2_lambda(timestamp)
+        user_vector[self.d3_index] = self.b_d3_lambda(timestamp)
+        user_vector[self.d4_index] = self.b_d4_lambda(timestamp)
+        user_vector[self.d5_index] = self.b_d5_lambda(timestamp)
+        user_vector[self.d6_index] = self.b_d6_lambda(timestamp)
+        user_vector[self.d7_index] = self.b_d7_lambda(timestamp)
+
+        user_vector[self.m1_index] = self.b_m1_lambda(timestamp)
+        user_vector[self.m2_index] = self.b_m2_lambda(timestamp)
+        user_vector[self.m3_index] = self.b_m3_lambda(timestamp)
+        user_vector[self.m4_index] = self.b_m4_lambda(timestamp)
+        user_vector[self.m5_index] = self.b_m5_lambda(timestamp)
+        user_vector[self.m6_index] = self.b_m6_lambda(timestamp)
+        user_vector[self.m7_index] = self.b_m7_lambda(timestamp)
+        user_vector[self.m8_index] = self.b_m8_lambda(timestamp)
+        user_vector[self.m9_index] = self.b_m9_lambda(timestamp)
+        user_vector[self.m10_index] = self.b_m10_lambda(timestamp)
+        user_vector[self.m11_index] = self.b_m11_lambda(timestamp)
+        user_vector[self.m12_index] = self.b_m12_lambda(timestamp)
+
 
         prediction = self.model.predict(user_vector.reshape(1, -1)) + self.R_hat
 
