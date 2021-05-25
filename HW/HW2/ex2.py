@@ -376,7 +376,7 @@ class CompetitionRecommender(Recommender):
         data = []
 
         for i, row in tqdm(self.ratings.iterrows(), "Data to sparse matrix"):
-            rows.extend([i] * 12)
+            rows.extend([i] * 30)
             cols.extend([
 
                 self.user_indices[row['user']],
