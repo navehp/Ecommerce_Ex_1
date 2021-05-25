@@ -269,7 +269,6 @@ class CompetitionRecommender(Recommender):
 
         self.bias_index = len(self.user_indices) + len(self.item_indices)
 
-
         self.t1_index = len(self.user_indices) + len(self.item_indices) + 1
         self.t2_index = len(self.user_indices) + len(self.item_indices) + 2
         self.t3_index = len(self.user_indices) + len(self.item_indices) + 3
@@ -279,26 +278,26 @@ class CompetitionRecommender(Recommender):
         self.t7_index = len(self.user_indices) + len(self.item_indices) + 7
         self.t8_index = len(self.user_indices) + len(self.item_indices) + 8
 
-        self.d1_index = len(self.user_indices) + len(self.item_indices) + 1 + 8
-        self.d2_index = len(self.user_indices) + len(self.item_indices) + 2 + 8
-        self.d3_index = len(self.user_indices) + len(self.item_indices) + 3 + 8
-        self.d4_index = len(self.user_indices) + len(self.item_indices) + 4 + 8
-        self.d5_index = len(self.user_indices) + len(self.item_indices) + 5 + 8
-        self.d6_index = len(self.user_indices) + len(self.item_indices) + 6 + 8
-        self.d7_index = len(self.user_indices) + len(self.item_indices) + 7 + 8
+        self.d1_index = len(self.user_indices) + len(self.item_indices) + 9
+        self.d2_index = len(self.user_indices) + len(self.item_indices) + 10
+        self.d3_index = len(self.user_indices) + len(self.item_indices) + 11
+        self.d4_index = len(self.user_indices) + len(self.item_indices) + 12
+        self.d5_index = len(self.user_indices) + len(self.item_indices) + 13
+        self.d6_index = len(self.user_indices) + len(self.item_indices) + 14
+        self.d7_index = len(self.user_indices) + len(self.item_indices) + 18
 
-        self.m1_index = len(self.user_indices) + len(self.item_indices) + 1 + 15
-        self.m2_index = len(self.user_indices) + len(self.item_indices) + 2 + 15
-        self.m3_index = len(self.user_indices) + len(self.item_indices) + 3 + 15
-        self.m4_index = len(self.user_indices) + len(self.item_indices) + 4 + 15
-        self.m5_index = len(self.user_indices) + len(self.item_indices) + 5 + 15
-        self.m6_index = len(self.user_indices) + len(self.item_indices) + 6 + 15
-        self.m7_index = len(self.user_indices) + len(self.item_indices) + 7 + 15
-        self.m8_index = len(self.user_indices) + len(self.item_indices) + 8 + 15
-        self.m9_index = len(self.user_indices) + len(self.item_indices) + 9 + 15
-        self.m10_index = len(self.user_indices) + len(self.item_indices) + 10 + 15
-        self.m11_index = len(self.user_indices) + len(self.item_indices) + 11 + 15
-        self.m12_index = len(self.user_indices) + len(self.item_indices) + 12 + 15
+        self.m1_index = len(self.user_indices) + len(self.item_indices) + 16
+        self.m2_index = len(self.user_indices) + len(self.item_indices) + 17
+        self.m3_index = len(self.user_indices) + len(self.item_indices) + 18
+        self.m4_index = len(self.user_indices) + len(self.item_indices) + 19
+        self.m5_index = len(self.user_indices) + len(self.item_indices) + 20
+        self.m6_index = len(self.user_indices) + len(self.item_indices) + 21
+        self.m7_index = len(self.user_indices) + len(self.item_indices) + 22
+        self.m8_index = len(self.user_indices) + len(self.item_indices) + 23
+        self.m9_index = len(self.user_indices) + len(self.item_indices) + 24
+        self.m10_index = len(self.user_indices) + len(self.item_indices) + 25
+        self.m11_index = len(self.user_indices) + len(self.item_indices) + 26
+        self.m12_index = len(self.user_indices) + len(self.item_indices) + 27
 
 
         self.R_hat = ratings['rating'].mean()
@@ -324,7 +323,7 @@ class CompetitionRecommender(Recommender):
         :param timestamp: Rating timestamp
         :return: Predicted rating of the user for the item
         """
-        user_vector = np.zeros(len(self.users) + len(self.items) + 11)
+        user_vector = np.zeros(len(self.users) + len(self.items) + 27)
 
         if user in self.user_indices:
             user_vector[self.user_indices[user]] = 1
