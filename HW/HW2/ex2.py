@@ -205,13 +205,13 @@ class CompetitionRecommender(Recommender):
         self.b_t7_lambda = lambda timestamp: int(18 <= datetime.fromtimestamp(timestamp).hour < 21)
         self.b_t8_lambda = lambda timestamp: int(21 <= datetime.fromtimestamp(timestamp).hour)
 
-        self.b_d1_lambda = lambda timestamp: int(datetime.fromtimestamp(timestamp).weekday() == 1)
-        self.b_d2_lambda = lambda timestamp: int(datetime.fromtimestamp(timestamp).weekday() == 2)
-        self.b_d3_lambda = lambda timestamp: int(datetime.fromtimestamp(timestamp).weekday() == 3)
-        self.b_d4_lambda = lambda timestamp: int(datetime.fromtimestamp(timestamp).weekday() == 4)
-        self.b_d5_lambda = lambda timestamp: int(datetime.fromtimestamp(timestamp).weekday() == 5)
-        self.b_d6_lambda = lambda timestamp: int(datetime.fromtimestamp(timestamp).weekday() == 6)
-        self.b_d7_lambda = lambda timestamp: int(datetime.fromtimestamp(timestamp).weekday() == 7)
+        self.b_d1_lambda = lambda timestamp: int(datetime.fromtimestamp(timestamp).weekday() == 0)
+        self.b_d2_lambda = lambda timestamp: int(datetime.fromtimestamp(timestamp).weekday() == 1)
+        self.b_d3_lambda = lambda timestamp: int(datetime.fromtimestamp(timestamp).weekday() == 2)
+        self.b_d4_lambda = lambda timestamp: int(datetime.fromtimestamp(timestamp).weekday() == 3)
+        self.b_d5_lambda = lambda timestamp: int(datetime.fromtimestamp(timestamp).weekday() == 4)
+        self.b_d6_lambda = lambda timestamp: int(datetime.fromtimestamp(timestamp).weekday() == 5)
+        self.b_d7_lambda = lambda timestamp: int(datetime.fromtimestamp(timestamp).weekday() == 6)
 
 
         self.b_m1_lambda = lambda timestamp: int(datetime.fromtimestamp(timestamp).month == 1)
@@ -269,6 +269,7 @@ class CompetitionRecommender(Recommender):
 
         self.bias_index = len(self.user_indices) + len(self.item_indices)
 
+
         self.t1_index = len(self.user_indices) + len(self.item_indices) + 1
         self.t2_index = len(self.user_indices) + len(self.item_indices) + 2
         self.t3_index = len(self.user_indices) + len(self.item_indices) + 3
@@ -298,6 +299,7 @@ class CompetitionRecommender(Recommender):
         self.m10_index = len(self.user_indices) + len(self.item_indices) + 10 + 15
         self.m11_index = len(self.user_indices) + len(self.item_indices) + 11 + 15
         self.m12_index = len(self.user_indices) + len(self.item_indices) + 12 + 15
+
 
         self.R_hat = ratings['rating'].mean()
         self.y = ratings.rating - self.R_hat
