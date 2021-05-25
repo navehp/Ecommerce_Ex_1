@@ -191,29 +191,28 @@ class LSRecommender(Recommender):
 
         return (self.X, self.beta, self.y)
 
-# TODO inherit from abstract class and delete rmse
 
-class CompetitionRecommender():
-
-    def __init__(self, ratings):
-        self.initialize_predictor(ratings)
-
-    def rmse(self, true_ratings) -> float:
-        """
-        :param true_ratings: DataFrame of the real ratings
-        :return: RMSE score
-        """
-        r = true_ratings['rating']
-        p = true_ratings.apply(lambda x: self.predict(int(x['user']), int(x['item']), x['timestamp']), axis=1)
-        return np.sqrt(((r - p) ** 2).sum() / len(r))
+class CompetitionRecommender(Recommender):
 
     def initialize_predictor(self, ratings: pd.DataFrame):
         self.ratings = ratings
-        self.b_d_lambda = lambda timestamp: int(6 <= datetime.fromtimestamp(timestamp).hour < 18)
-        self.b_n_lambda = lambda timestamp: int(1 - self.b_d_lambda(timestamp))
+        self.b_t1_lambda = lambda timestamp: int(datetime.fromtimestamp(timestamp).hour < 3)
+        self.b_t2_lambda = lambda timestamp: int(3 <= datetime.fromtimestamp(timestamp).hour < 6)
+        self.b_t3_lambda = lambda timestamp: int(6 <= datetime.fromtimestamp(timestamp).hour < 9)
+        self.b_t4_lambda = lambda timestamp: int(9 <= datetime.fromtimestamp(timestamp).hour < 12)
+        self.b_t5_lambda = lambda timestamp: int(12 <= datetime.fromtimestamp(timestamp).hour < 15)
+        self.b_t6_lambda = lambda timestamp: int(15 <= datetime.fromtimestamp(timestamp).hour < 18)
+        self.b_t7_lambda = lambda timestamp: int(18 <= datetime.fromtimestamp(timestamp).hour < 21)
+        self.b_t8_lambda = lambda timestamp: int(21 <= datetime.fromtimestamp(timestamp).hour)
         self.b_w_lambda = lambda timestamp: int(datetime.fromtimestamp(timestamp).weekday() in [4, 5])
-        self.ratings['day'] = ratings.timestamp.apply(self.b_d_lambda)
-        self.ratings['night'] = ratings.timestamp.apply(self.b_n_lambda)
+        self.ratings['t1'] = ratings.timestamp.apply(self.b_t1_lambda)
+        self.ratings['t2'] = ratings.timestamp.apply(self.b_t2_lambda)
+        self.ratings['t3'] = ratings.timestamp.apply(self.b_t3_lambda)
+        self.ratings['t4'] = ratings.timestamp.apply(self.b_t4_lambda)
+        self.ratings['t5'] = ratings.timestamp.apply(self.b_t5_lambda)
+        self.ratings['t6'] = ratings.timestamp.apply(self.b_t6_lambda)
+        self.ratings['t7'] = ratings.timestamp.apply(self.b_t7_lambda)
+        self.ratings['t8'] = ratings.timestamp.apply(self.b_t8_lambda)
         self.ratings['weekend'] = ratings.timestamp.apply(self.b_w_lambda)
         self.ratings['bias'] = pd.Series(np.ones(len(ratings)))
 
@@ -222,22 +221,28 @@ class CompetitionRecommender():
 
         self.user_indices = {user: i for i, user in enumerate(self.users)}
         self.item_indices = {item: len(self.user_indices) + i for i, item in enumerate(self.items)}
-        self.day_index = len(self.user_indices) + len(self.item_indices)
-        self.night_index = len(self.user_indices) + len(self.item_indices) + 1
-        self.weekend_index = len(self.user_indices) + len(self.item_indices) + 2
-        self.bias_index = len(self.user_indices) + len(self.item_indices) + 3
+        self.t1_index = len(self.user_indices) + len(self.item_indices)
+        self.t2_index = len(self.user_indices) + len(self.item_indices) + 1
+        self.t3_index = len(self.user_indices) + len(self.item_indices) + 2
+        self.t4_index = len(self.user_indices) + len(self.item_indices) + 3
+        self.t5_index = len(self.user_indices) + len(self.item_indices) + 4
+        self.t6_index = len(self.user_indices) + len(self.item_indices) + 5
+        self.t7_index = len(self.user_indices) + len(self.item_indices) + 6
+        self.t8_index = len(self.user_indices) + len(self.item_indices) + 7
+        self.weekend_index = len(self.user_indices) + len(self.item_indices) + 9
+        self.bias_index = len(self.user_indices) + len(self.item_indices) + 10
 
         self.R_hat = ratings['rating'].mean()
         self.y = ratings.rating - self.R_hat
 
-        # self.create_sparse_matrix()
-        # with open('sparse_matrix.pickle', 'wb') as f:
-        #     pickle.dump(self.sparse_ratings, f)
-        with open('sparse_matrix.pickle', 'rb') as f:
-            self.sparse_ratings = pickle.load(f)
+        self.create_sparse_matrix()
+        with open('sparse_matrix.pickle', 'wb') as f:
+            pickle.dump(self.sparse_ratings, f)
+        # with open('sparse_matrix.pickle', 'rb') as f:
+        #     self.sparse_ratings = pickle.load(f)
         print("Processed Data")
         start = time.time()
-        self.model = linear_model.LassoCV().fit(self.sparse_ratings, self.y)
+        self.model = linear_model.RidgeCV().fit(self.sparse_ratings, self.y)
         print(f"Fitted Model, time: {time.time() - start}")
         print('Parameters: ', self.model.get_params(), self.model.alpha_ )
 
@@ -249,14 +254,20 @@ class CompetitionRecommender():
         :param timestamp: Rating timestamp
         :return: Predicted rating of the user for the item
         """
-        user_vector = np.zeros(len(self.users) + len(self.items) + 4)
+        user_vector = np.zeros(len(self.users) + len(self.items) + 11)
 
         if user in self.user_indices:
             user_vector[self.user_indices[user]] = 1
         if item in self.item_indices:
             user_vector[self.item_indices[item]] = 1
-        user_vector[self.day_index] = self.b_d_lambda(timestamp)
-        user_vector[self.night_index] = self.b_n_lambda(timestamp)
+        user_vector[self.t1_index] = self.b_t1_lambda(timestamp)
+        user_vector[self.t2_index] = self.b_t2_lambda(timestamp)
+        user_vector[self.t3_index] = self.b_t3_lambda(timestamp)
+        user_vector[self.t4_index] = self.b_t4_lambda(timestamp)
+        user_vector[self.t5_index] = self.b_t5_lambda(timestamp)
+        user_vector[self.t6_index] = self.b_t6_lambda(timestamp)
+        user_vector[self.t7_index] = self.b_t7_lambda(timestamp)
+        user_vector[self.t8_index] = self.b_t8_lambda(timestamp)
         user_vector[self.weekend_index] = self.b_w_lambda(timestamp)
         user_vector[self.bias_index] = 1
 
@@ -273,18 +284,35 @@ class CompetitionRecommender():
         data = []
 
         for i, row in tqdm(self.ratings.iterrows(), "Data to sparse matrix"):
-            rows.extend([i] * 5)
+            rows.extend([i] * 12)
             cols.extend([
                 self.user_indices[row['user']],
                 self.item_indices[row['item']],
-                self.day_index if row['day'] else self.night_index,
+                self.t1_index,
+                self.t2_index,
+                self.t3_index,
+                self.t4_index,
+                self.t5_index,
+                self.t6_index,
+                self.t7_index,
+                self.t8_index,
                 self.weekend_index,
                 self.bias_index
             ])
-            data.extend([1, 1, 1, 1 if row['weekend'] else 0, 1])
+            data.extend([1, 1,
+                         1 if row['t1'] else 0,
+                         1 if row['t2'] else 0,
+                         1 if row['t3'] else 0,
+                         1 if row['t4'] else 0,
+                         1 if row['t5'] else 0,
+                         1 if row['t6'] else 0,
+                         1 if row['t7'] else 0,
+                         1 if row['t8'] else 0,
+                         1 if row['weekend'] else 0,
+                         1])
 
         self.sparse_ratings = scipy.sparse.coo_matrix((data, (rows, cols)),
-                                                      shape=(len(self.ratings), len(self.user_indices) + len(self.item_indices) + 4))
+                                                      shape=(len(self.ratings), len(self.user_indices) + len(self.item_indices) + 11))
 
         print("loaded data to sparse matrix successfully")
 

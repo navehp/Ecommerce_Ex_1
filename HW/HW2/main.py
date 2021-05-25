@@ -89,7 +89,7 @@ if __name__ == '__main__':
     # print("Calculating Neighborhood")
     # neighborhood_recommender = ex2.NeighborhoodRecommender(train)
     # print(neighborhood_recommender.rmse(test))
-    # print('Calculating LS')
+    # print('DCalculating LS')
     # ls_recommender = ex2.LSRecommender(train)
     # ls_recommender.solve_ls()
     # print(ls_recommender.rmse(test))
