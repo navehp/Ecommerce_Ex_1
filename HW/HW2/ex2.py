@@ -235,7 +235,7 @@ class CompetitionRecommender(Recommender):
         self.R_hat = ratings['rating'].mean()
         self.y = ratings.rating - self.R_hat
 
-        self.create_sparse_matrix()
+        # self.create_sparse_matrix()
         # with open('sparse_matrix.pickle', 'wb') as f:
         #     pickle.dump(self.sparse_ratings, f)
         with open('sparse_matrix.pickle', 'rb') as f:
