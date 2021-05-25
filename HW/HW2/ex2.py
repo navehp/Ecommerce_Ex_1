@@ -242,7 +242,7 @@ class CompetitionRecommender(Recommender):
         #     self.sparse_ratings = pickle.load(f)
         print("Processed Data")
         start = time.time()
-        self.model = linear_model.RidgeCV().fit(self.sparse_ratings, self.y)
+        self.model = linear_model.RidgeCV(cv=5).fit(self.sparse_ratings, self.y)
         print(f"Fitted Model, time: {time.time() - start}")
         print('Parameters: ', self.model.get_params(), self.model.alpha_ )
 
