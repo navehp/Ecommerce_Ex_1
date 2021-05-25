@@ -303,11 +303,11 @@ class CompetitionRecommender(Recommender):
         self.R_hat = ratings['rating'].mean()
         self.y = ratings.rating - self.R_hat
 
-        # self.create_sparse_matrix()
-        # with open('sparse_matrix.pickle', 'wb') as f:
-        #     pickle.dump(self.sparse_ratings, f)
-        with open('sparse_matrix.pickle', 'rb') as f:
-            self.sparse_ratings = pickle.load(f)
+        self.create_sparse_matrix()
+        with open('sparse_matrix.pickle', 'wb') as f:
+            pickle.dump(self.sparse_ratings, f)
+        # with open('sparse_matrix.pickle', 'rb') as f:
+        #     self.sparse_ratings = pickle.load(f)
 
         print("Processed Data")
         start = time.time()
@@ -378,8 +378,11 @@ class CompetitionRecommender(Recommender):
         for i, row in tqdm(self.ratings.iterrows(), "Data to sparse matrix"):
             rows.extend([i] * 12)
             cols.extend([
+
                 self.user_indices[row['user']],
                 self.item_indices[row['item']],
+                self.bias_index,
+
                 self.t1_index,
                 self.t2_index,
                 self.t3_index,
@@ -388,10 +391,30 @@ class CompetitionRecommender(Recommender):
                 self.t6_index,
                 self.t7_index,
                 self.t8_index,
-                self.weekend_index,
-                self.bias_index
+
+                self.d1_index,
+                self.d2_index,
+                self.d3_index,
+                self.d4_index,
+                self.d5_index,
+                self.d6_index,
+                self.d7_index,
+
+                self.m1_index,
+                self.m2_index,
+                self.m3_index,
+                self.m4_index,
+                self.m5_index,
+                self.m6_index,
+                self.m7_index,
+                self.m8_index,
+                self.m9_index,
+                self.m10_index,
+                self.m11_index,
+                self.m12_index,
+
             ])
-            data.extend([1, 1,
+            data.extend([1, 1, 1,
                          1 if row['t1'] else 0,
                          1 if row['t2'] else 0,
                          1 if row['t3'] else 0,
@@ -400,8 +423,29 @@ class CompetitionRecommender(Recommender):
                          1 if row['t6'] else 0,
                          1 if row['t7'] else 0,
                          1 if row['t8'] else 0,
-                         1 if row['weekend'] else 0,
-                         1])
+
+                         1 if row['d1'] else 0,
+                         1 if row['d2'] else 0,
+                         1 if row['d3'] else 0,
+                         1 if row['d4'] else 0,
+                         1 if row['d5'] else 0,
+                         1 if row['d6'] else 0,
+                         1 if row['d7'] else 0,
+
+                         1 if row['m1'] else 0,
+                         1 if row['m2'] else 0,
+                         1 if row['m3'] else 0,
+                         1 if row['m4'] else 0,
+                         1 if row['m5'] else 0,
+                         1 if row['m6'] else 0,
+                         1 if row['m7'] else 0,
+                         1 if row['m8'] else 0,
+                         1 if row['m9'] else 0,
+                         1 if row['m10'] else 0,
+                         1 if row['m11'] else 0,
+                         1 if row['m12'] else 0,
+
+                         ])
 
         self.sparse_ratings = scipy.sparse.coo_matrix((data, (rows, cols)),
                                                       shape=(len(self.ratings), len(self.user_indices) + len(self.item_indices) + 11))
