@@ -306,15 +306,20 @@ class CompetitionRecommender(Recommender):
         self.R_hat = ratings['rating'].mean()
         self.y = ratings.rating - self.R_hat
 
-        self.create_sparse_matrix()
-        with open('sparse_matrix.pickle', 'wb') as f:
-            pickle.dump(self.sparse_ratings, f)
-        # with open('sparse_matrix.pickle', 'rb') as f:
-        #     self.sparse_ratings = pickle.load(f)
+        # self.create_sparse_matrix()
+        # with open('sparse_matrix.pickle', 'wb') as f:
+        #     pickle.dump(self.sparse_ratings, f)
+        with open('sparse_matrix.pickle', 'rb') as f:
+            self.sparse_ratings = pickle.load(f)
 
         print("Processed Data")
         start = time.time()
-        self.model = linear_model.RidgeCV(cv=5).fit(self.sparse_ratings, self.y)
+
+        # self.model = linear_model.RidgeCV(cv=5).fit(self.sparse_ratings, self.y)
+        # self.model = linear_model.ElasticNetCV(cv=5).fit(self.sparse_ratings, self.y)
+        self.model = linear_model.LassoCV(cv=5).fit(self.sparse_ratings, self.y)
+
+
         print(f"Fitted Model, time: {time.time() - start}")
         print('Parameters: ', self.model.get_params(), self.model.alpha_ )
 

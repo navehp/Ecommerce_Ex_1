@@ -78,6 +78,8 @@ if __name__ == '__main__':
     start = time.time()
 
     ratings_comp = pd.read_csv('ratings_comp.csv')
+
+
     train_comp, test_comp = train_test_split(ratings_comp)
     comp_recommender = ex2.CompetitionRecommender(train_comp)
     print(comp_recommender.rmse(test_comp))
