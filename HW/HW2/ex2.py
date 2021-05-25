@@ -300,6 +300,9 @@ class CompetitionRecommender(Recommender):
         self.m12_index = len(self.user_indices) + len(self.item_indices) + 27
 
 
+        self.features_number = 28
+
+
         self.R_hat = ratings['rating'].mean()
         self.y = ratings.rating - self.R_hat
 
@@ -323,7 +326,7 @@ class CompetitionRecommender(Recommender):
         :param timestamp: Rating timestamp
         :return: Predicted rating of the user for the item
         """
-        user_vector = np.zeros(len(self.users) + len(self.items) + 28)
+        user_vector = np.zeros(len(self.users) + len(self.items) + self.features_number)
 
         if user in self.user_indices:
             user_vector[self.user_indices[user]] = 1
@@ -376,7 +379,7 @@ class CompetitionRecommender(Recommender):
         data = []
 
         for i, row in tqdm(self.ratings.iterrows(), "Data to sparse matrix"):
-            rows.extend([i] * 30)
+            rows.extend([i] * (self.features_number + 2))
             cols.extend([
 
                 self.user_indices[row['user']],
@@ -448,7 +451,7 @@ class CompetitionRecommender(Recommender):
                          ])
 
         self.sparse_ratings = scipy.sparse.coo_matrix((data, (rows, cols)),
-                                                      shape=(len(self.ratings), len(self.user_indices) + len(self.item_indices) + 11))
+                                                      shape=(len(self.ratings), len(self.user_indices) + len(self.item_indices) + self.features_number))
 
         print("loaded data to sparse matrix successfully")
 
