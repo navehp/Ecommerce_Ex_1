@@ -236,10 +236,11 @@ class CompetitionRecommender(Recommender):
         self.y = ratings.rating - self.R_hat
 
         self.create_sparse_matrix()
-        with open('sparse_matrix.pickle', 'wb') as f:
-            pickle.dump(self.sparse_ratings, f)
-        # with open('sparse_matrix.pickle', 'rb') as f:
-        #     self.sparse_ratings = pickle.load(f)
+        # with open('sparse_matrix.pickle', 'wb') as f:
+        #     pickle.dump(self.sparse_ratings, f)
+        with open('sparse_matrix.pickle', 'rb') as f:
+            self.sparse_ratings = pickle.load(f)
+
         print("Processed Data")
         start = time.time()
         self.model = linear_model.RidgeCV(cv=5).fit(self.sparse_ratings, self.y)
