@@ -354,7 +354,7 @@ class CompetitionRecommender(Recommender):
         user_vector[self.m12_index] = self.b_m12_lambda(timestamp)
 
 
-        prediction = self.model.predict(user_vector.reshape(1, -1)) + self.R_hat
+        prediction = self.model.predict(user_vector.reshape(1, -1))[0] + self.R_hat
 
         prediction = max(0.5, prediction)
         prediction = min(5.0, prediction)
