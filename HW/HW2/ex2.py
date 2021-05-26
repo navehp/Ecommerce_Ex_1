@@ -7,11 +7,6 @@ from datetime import datetime
 import scipy.sparse
 from sklearn import linear_model
 
-from sklearn.neural_network import MLPRegressor
-from tqdm import tqdm
-import time
-from pickle import load, dump
-
 
 class Recommender(abc.ABC):
 
@@ -284,7 +279,7 @@ class CompetitionRecommender(Recommender):
         self.d4_index = len(self.user_indices) + len(self.item_indices) + 12
         self.d5_index = len(self.user_indices) + len(self.item_indices) + 13
         self.d6_index = len(self.user_indices) + len(self.item_indices) + 14
-        self.d7_index = len(self.user_indices) + len(self.item_indices) + 18
+        self.d7_index = len(self.user_indices) + len(self.item_indices) + 15
 
         self.m1_index = len(self.user_indices) + len(self.item_indices) + 16
         self.m2_index = len(self.user_indices) + len(self.item_indices) + 17
@@ -306,23 +301,11 @@ class CompetitionRecommender(Recommender):
         self.R_hat = ratings['rating'].mean()
         self.y = ratings.rating - self.R_hat
 
-        # self.create_sparse_matrix()
-        # with open('sparse_matrix.pickle', 'wb') as f:
-        #     pickle.dump(self.sparse_ratings, f)
-        with open('sparse_matrix.pickle', 'rb') as f:
-            self.sparse_ratings = pickle.load(f)
+        self.create_sparse_matrix()
+        with open('sparse_matrix.pickle', 'wb') as f:
+            pickle.dump(self.sparse_ratings, f)
 
-        print("Processed Data")
-        start = time.time()
-
-        # self.model = linear_model.RidgeCV(cv=5).fit(self.sparse_ratings, self.y)
-        # self.model = linear_model.ElasticNetCV(cv=5).fit(self.sparse_ratings, self.y)
-        self.model = linear_model.LassoCV(cv=5).fit(self.sparse_ratings, self.y)
-
-
-        print(f"Fitted Model, time: {time.time() - start}")
-        print('Parameters: ', self.model.get_params(), self.model.alpha_ )
-
+        self.model = linear_model.RidgeCV(cv=5, alphas=(0.5, 1, 1.5)).fit(self.sparse_ratings, self.y)
 
     def predict(self, user: int, item: int, timestamp: int) -> float:
         """
@@ -383,7 +366,7 @@ class CompetitionRecommender(Recommender):
         cols = []
         data = []
 
-        for i, row in tqdm(self.ratings.iterrows(), "Data to sparse matrix"):
+        for i, row in self.ratings.iterrows():
             rows.extend([i] * (self.features_number + 2))
             cols.extend([
 
@@ -458,7 +441,6 @@ class CompetitionRecommender(Recommender):
         self.sparse_ratings = scipy.sparse.coo_matrix((data, (rows, cols)),
                                                       shape=(len(self.ratings), len(self.user_indices) + len(self.item_indices) + self.features_number))
 
-        print("loaded data to sparse matrix successfully")
 
 if __name__ == '__main__':
     pass
