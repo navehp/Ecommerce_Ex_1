@@ -360,7 +360,6 @@ class CompetitionRecommender(Recommender):
         prediction = min(5.0, prediction)
         return prediction
 
-
     def create_sparse_matrix(self):
         rows = []
         cols = []
