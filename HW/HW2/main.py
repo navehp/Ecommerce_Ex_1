@@ -57,9 +57,10 @@ def main():
     ls_recommender.solve_ls()
     print(ls_recommender.rmse(test))
 
-    # ratings_comp = pd.read_csv('ratings_comp.csv')
-    # comp_recommender = ex2.CompetitionRecommender(ratings_comp)
-    # print(comp_recommender.rmse(test_comp))
+    ratings_comp = pd.read_csv('ratings_comp.csv')
+    ratings_comp, test_comp = train_test_split(ratings_comp)
+    comp_recommender = ex2.CompetitionRecommender(ratings_comp)
+    print(comp_recommender.rmse(test_comp))
 
     print(f'Took {time.time() - start:.2f}s')
 
