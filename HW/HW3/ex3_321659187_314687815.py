@@ -28,7 +28,7 @@ def find_single_bundle(data, mapping, bundle):
 
     for brand in B:
         brand_data = data[(data.brand == brand) & (data.year == mapping[brand])]
-        brand_data = brand_data.sort_values('value', ascending=False)
+        brand_data = brand_data.sort_values('value', ascending=True)
         for _, row in brand_data.iterrows():
             if row.id not in bundle:
                 iteration_bundle.append(row.id)
@@ -45,9 +45,9 @@ def opt_bnd(data, k, years):
     mappings = generate_permutations(years)
     for i in range(k):
         bundles = [find_single_bundle(data, mapping, optimal_bundle) for mapping in mappings]
-        max_bundle, max_value = max(bundles, key=lambda x: x[1] if len(x[0]) == 5 else 0)
-        optimal_bundle.extend(max_bundle)
-        optimal_value += max_value
+        min_bundle, min_value = min(bundles, key=lambda x: x[1] if len(x[0]) == 5 else 0)
+        optimal_bundle.extend(min_bundle)
+        optimal_value += min_value
 
     return {"cost": optimal_value, "bundle": optimal_bundle}
 
@@ -76,8 +76,9 @@ def comb_vcg(data, k, years):
 
 ########## Part B ###############
 def extract_data(brand, year, size, data):
-    #extract the specific data for that type
-    return []
+    #  extract the specific data for that type
+    filtered_data = data[(data.brand == brand) & (data.year == year) & (data.engine_size == size)]
+    return filtered_data.value.tolist()
 
 
 
@@ -92,12 +93,24 @@ class Type:
     def avg_buy(self):
         # runs a procurement vcg auction for buying cars_num cars on the given self.data.
         # returns the average price paid for a winning car.
-        return 0
+        next_car = sorted(self.data)[self.cars_num]
+        return next_car
 
     def cdf(self, x):
         # return F(x) for the histogram self.data
-        return 1
+        sorted_data = sorted(self.data)
 
+        cars_count = 0
+        previous_bid = 0
+        for i, bid in enumerate(sorted_data):
+            if x <= bid:
+                break
+            cars_count += 1
+            previous_bid = bid
+
+        cdf = cars_count / len(sorted_data) + (x - bid) / (bid - previous_bid) * sorted_data.count(bid) / len(
+            sorted_data)
+        return 1
 
     def os_cdf(self, r, n, x):
         #The r out of n order statistic CDF
