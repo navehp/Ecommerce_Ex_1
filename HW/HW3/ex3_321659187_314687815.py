@@ -60,7 +60,7 @@ def calculate_payment(data, k, years, optimal_value, id):
     return sw_with_id - sw_without_id
 
 
-def comb_vcg(data, k, years):
+def proc_vcg(data, k, years):  # TODO check if we need to call this proc_vcg
     # runs the VCG procurement auction
     payments = {}
 
@@ -68,7 +68,6 @@ def comb_vcg(data, k, years):
     optimal_bundle = optimal_bundle_dict['bundle']
     optimal_value = optimal_bundle_dict['cost']
     for id in optimal_bundle:
-        print(id)
         payment = calculate_payment(data, k, years, optimal_value, id)
         payments[id] = payment
     return payments
@@ -136,36 +135,38 @@ class Type:
 
         return cdf
 
+
     def exp_rev(self):
         # returns the expected revenue in future auction for cars_num items and buyers_num buyers
-
-        order_statistics_expected_values = []
-
-        for r in range(1, self.buyers_num + 2):
-            order_statistics_expected_values.append(self.order_statistics_expected_value(r, self.cars_num))
-
-        expected_revenue = 0
-        for r in range(1, self.buyers_num + 1):
-            expected_revenue += r * (order_statistics_expected_values[r] - order_statistics_expected_values[r - 1])
-
+        r = self.buyers_num - self.cars_num
+        n = self.buyers_num
+        expected_revenue = self.order_statistic_expected_value(r, n) * self.cars_num
         return expected_revenue
 
     def order_statistic_expected_value(self, r, n):
         expected_value = 0
         x = 0
+
+        if r < 0:
+            return 0
+
         while True:
             os_cdf = self.os_cdf(r, n, x)
             expected_value += 1 - os_cdf
             if os_cdf == 1:
                 break
+            else:
+                x += 1
         return expected_value
 
     def exp_rev_median(self, n):
         reserve_price = self.median(self.data)
         reserve_price_cdf = self.cdf(reserve_price)
 
-        medain_data = [i for i in self.data if i >= reserve_price]
-        median_type = Type(self.brand, self.year, self.size, medain_data)
+        self.buyers_num = n
+
+        median_data = [i for i in self.data if i >= reserve_price]
+        median_type = Type(self.brand, self.year, self.size, median_data)
 
         result = 0
 
@@ -179,9 +180,9 @@ class Type:
             # all above reserve
             result += (1 - reserve_price_cdf) ** 3 * median_type.order_statistic_expected_value(2, 3)
             # one below reserve
-            result += (1 - reserve_price_cdf) ** 2 * reserve_price_cdf * median_type.order_statistic_expected_value(1, 2)
+            result += 3 * (1 - reserve_price_cdf) ** 2 * reserve_price_cdf * median_type.order_statistic_expected_value(1, 2)
             # two below reserve
-            result += (1 - reserve_price_cdf) * reserve_price_cdf ** 2 * reserve_price
+            result += 3 * (1 - reserve_price_cdf) * reserve_price_cdf ** 2 * reserve_price
         else:
             raise Exception("Aval... Aval... ")
         return result
