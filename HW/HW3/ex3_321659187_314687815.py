@@ -77,6 +77,8 @@ def comb_vcg(data, k, years):
 ########## Part B ###############
 def extract_data(brand, year, size, data):
     #  extract the specific data for that type
+    if isinstance(data, list):
+        return data
     filtered_data = data[(data.brand == brand) & (data.year == year) & (data.engine_size == size)]
     return filtered_data.value.tolist()
 
@@ -88,6 +90,9 @@ class Type:
     buyers_num = 0
 
     def __init__(self, brand, year, size, data):
+        self.brand = brand
+        self.year = year
+        self.size = size
         self.data = extract_data(brand, year, size, data)
 
     def avg_buy(self):
@@ -100,17 +105,22 @@ class Type:
         # return F(x) for the histogram self.data
         sorted_data = sorted(self.data)
 
+        if x < sorted_data[0]:
+            return 0.0
+        if sorted_data[-1] <= x:
+            return 1.0
+
         cars_count = 0
         previous_bid = 0
         cur_bid = 0
         for bid in sorted_data:
             cur_bid = bid
-            if x <= bid:
+            if x < bid:
                 break
             cars_count += 1
             previous_bid = bid
 
-        cdf = cars_count / len(sorted_data) + (x - cur_bid) / (cur_bid - previous_bid) * sorted_data.count(cur_bid) / len(
+        cdf = cars_count / len(sorted_data) + (x - previous_bid) / (cur_bid - previous_bid) * sorted_data.count(cur_bid) / len(
             sorted_data)
 
         return cdf
@@ -122,7 +132,7 @@ class Type:
         x_cdf = self.cdf(x)
 
         for j in range(r, n + 1):
-            cdf += math.comb(n, j) * x_cdf ** j * (1 - x_cdf) ** (n-j)
+            cdf += self.comb(n, j) * x_cdf ** j * (1 - x_cdf) ** (n-j)
 
         return cdf
 
@@ -132,23 +142,49 @@ class Type:
         order_statistics_expected_values = []
 
         for r in range(1, self.buyers_num + 2):
-            expected_value = 0
-            x = 0
-            while True:
-                os_cdf = self.os_cdf(r, self.cars_num, x)
-                expected_value += 1 - os_cdf
-                if os_cdf == 1:
-                    break
-            order_statistics_expected_values.append(expected_value)
+            order_statistics_expected_values.append(self.order_statistics_expected_value(r, self.cars_num))
 
         expected_revenue = 0
         for r in range(1, self.buyers_num + 1):
             expected_revenue += r * (order_statistics_expected_values[r] - order_statistics_expected_values[r - 1])
+
         return expected_revenue
 
+    def order_statistic_expected_value(self, r, n):
+        expected_value = 0
+        x = 0
+        while True:
+            os_cdf = self.os_cdf(r, n, x)
+            expected_value += 1 - os_cdf
+            if os_cdf == 1:
+                break
+        return expected_value
+
     def exp_rev_median(self, n):
-        reserve price
-        return 0
+        reserve_price = self.median(self.data)
+        reserve_price_cdf = self.cdf(reserve_price)
+
+        medain_data = [i for i in self.data if i >= reserve_price]
+        median_type = Type(self.brand, self.year, self.size, medain_data)
+
+        result = 0
+
+        if n == 2:
+            # both above reserve
+            result += (1 - reserve_price_cdf) ** 2 * median_type.order_statistic_expected_value(1, 2)
+            # one above reserve, another below
+            result += 2 * reserve_price_cdf * (1 - reserve_price_cdf) * reserve_price
+
+        elif n == 3:
+            # all above reserve
+            result += (1 - reserve_price_cdf) ** 3 * median_type.order_statistic_expected_value(2, 3)
+            # one below reserve
+            result += (1 - reserve_price_cdf) ** 2 * reserve_price_cdf * median_type.order_statistic_expected_value(1, 2)
+            # two below reserve
+            result += (1 - reserve_price_cdf) * reserve_price_cdf ** 2 * reserve_price
+        else:
+            raise Exception("Aval... Aval... ")
+        return result
 
     ########## Part C ###############
 
@@ -156,3 +192,18 @@ class Type:
         # returns your suggestion for a reserve price based on the self_data histogram.
         return 0
 
+
+    @staticmethod
+    def median(values):
+
+        n = len(values)
+        values = sorted(values)
+
+        if n % 2 == 0:
+            return (values[n // 2 - 1] + values[n // 2]) / 2
+
+        return values[math.ceil(n / 2) - 1]
+
+    @staticmethod
+    def comb(n, k):
+        return math.factorial(n) / (math.factorial(k) * math.factorial(n - k))
