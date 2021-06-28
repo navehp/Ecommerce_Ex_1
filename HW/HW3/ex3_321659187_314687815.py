@@ -13,7 +13,6 @@ B = [FORD, BMW, KIA, VOLKSWAGEN, FERRARI]
 
 ########## Part A ###############
 
-
 def generate_permutations(years):
     mappings = []
     for p in permutations(B):
@@ -119,8 +118,7 @@ class Type:
             cars_count += 1
             previous_bid = bid
 
-        cdf = cars_count / len(sorted_data) + (x - previous_bid) / (cur_bid - previous_bid) * sorted_data.count(cur_bid) / len(
-            sorted_data)
+        cdf = cars_count / len(sorted_data) + ((x - previous_bid) / (cur_bid - previous_bid)) * (sorted_data.count(cur_bid) / len(sorted_data))
 
         return cdf
 
@@ -142,6 +140,7 @@ class Type:
         n = self.buyers_num
         expected_revenue = self.order_statistic_expected_value(r, n) * self.cars_num
         return expected_revenue
+
 
     def order_statistic_expected_value(self, r, n):
         expected_value = 0
