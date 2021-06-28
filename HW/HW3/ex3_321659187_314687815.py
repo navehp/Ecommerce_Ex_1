@@ -189,10 +189,39 @@ class Type:
 
     ########## Part C ###############
 
+    def reserve_price_expected_revenue(self, reserve_price):
+        reserve_price_cdf = self.cdf(reserve_price)
+        reserve_price_data = [i for i in self.data if i >= reserve_price]
+        reserve_price_type = Type(self.brand, self.year, self.size, reserve_price_data)
+
+        expected_revenue = 0
+        for k in range(1, self.buyers_num + 1):
+            prob = self.comb(self.buyers_num, k) * ((1 - reserve_price_cdf) ** k) * (reserve_price_cdf ** (self.buyers_num - k))
+            if k <= self.cars_num:
+                expected_revenue += prob * k * reserve_price
+            else:
+                expected_revenue += prob * self.cars_num * \
+                                    reserve_price_type.order_statistic_expected_value(r=k - self.cars_num, n=k)
+
+        return expected_revenue
+
     def reserve_price(self):
         # returns your suggestion for a reserve price based on the self_data histogram.
-        return 0
+        min_bound = int(self.order_statistic_expected_value(r=self.buyers_num - self.cars_num, n=self.buyers_num))
+        max_bound = int(self.order_statistic_expected_value(r=self.buyers_num, n=self.buyers_num))
+        print(min_bound, max_bound)
 
+        best_reserve_price = 0
+        best_revenue = float('-inf')
+
+        for reserve_price in range(min_bound, max_bound, 100):
+            print(reserve_price)
+            expected_revenue = self.reserve_price_expected_revenue(reserve_price)
+            if expected_revenue > best_revenue:
+                best_revenue = expected_revenue
+                best_reserve_price = reserve_price
+
+        return best_reserve_price
 
     @staticmethod
     def median(values):
