@@ -60,11 +60,11 @@ def calculate_payment(data, k, years, optimal_value, id):
     return sw_without_id - sw_with_id
 
 
-def comb_vcg(data, k, years):  # TODO check this out
+def comb_vcg(data, k, years):
     return proc_vcg(data, k, years)
 
 
-def proc_vcg(data, k, years):  # TODO check if we need to call this proc_vcg
+def proc_vcg(data, k, years):
     # runs the VCG procurement auction
     payments = {}
 
