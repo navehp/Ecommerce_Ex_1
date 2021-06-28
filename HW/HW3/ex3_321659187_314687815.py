@@ -13,6 +13,7 @@ B = [FORD, BMW, KIA, VOLKSWAGEN, FERRARI]
 
 ########## Part A ###############
 
+
 def generate_permutations(years):
     mappings = []
     for p in permutations(B):
@@ -59,6 +60,10 @@ def calculate_payment(data, k, years, optimal_value, id):
     return sw_with_id - sw_without_id
 
 
+def comb_vcg(data, k, years):  # TODO check this out
+    return proc_vcg( data, k, years)
+
+
 def proc_vcg(data, k, years):  # TODO check if we need to call this proc_vcg
     # runs the VCG procurement auction
     payments = {}
@@ -91,7 +96,7 @@ class Type:
         self.brand = brand
         self.year = year
         self.size = size
-        self.data = extract_data(brand, year, size, data)
+        self.data = sorted(extract_data(brand, year, size, data))
 
     def avg_buy(self):
         # runs a procurement vcg auction for buying cars_num cars on the given self.data.
@@ -118,7 +123,8 @@ class Type:
             cars_count += 1
             previous_bid = bid
 
-        cdf = cars_count / len(sorted_data) + ((x - previous_bid) / (cur_bid - previous_bid)) * (sorted_data.count(cur_bid) / len(sorted_data))
+        cdf = cars_count / len(sorted_data) + (x - previous_bid) / (cur_bid - previous_bid) * sorted_data.count(cur_bid) / len(
+            sorted_data)
 
         return cdf
 
@@ -141,10 +147,11 @@ class Type:
         expected_revenue = self.order_statistic_expected_value(r, n) * self.cars_num
         return expected_revenue
 
-
-    def order_statistic_expected_value(self, r, n):
+    def order_statistic_expected_value(self, r, n, z=None):
         expected_value = 0
         x = 0
+        if z:
+            x = z
 
         if r < 0:
             return 0
@@ -162,28 +169,10 @@ class Type:
         reserve_price = self.median(self.data)
         reserve_price_cdf = self.cdf(reserve_price)
 
-        self.buyers_num = n
-
-        median_data = [i for i in self.data if i >= reserve_price]
-        median_type = Type(self.brand, self.year, self.size, median_data)
-
-        result = 0
-
-        if n == 2:
-            # both above reserve
-            result += (1 - reserve_price_cdf) ** 2 * median_type.order_statistic_expected_value(1, 2)
-            # one above reserve, another below
-            result += 2 * reserve_price_cdf * (1 - reserve_price_cdf) * reserve_price
-
-        elif n == 3:
-            # all above reserve
-            result += (1 - reserve_price_cdf) ** 3 * median_type.order_statistic_expected_value(2, 3)
-            # one below reserve
-            result += 3 * (1 - reserve_price_cdf) ** 2 * reserve_price_cdf * median_type.order_statistic_expected_value(1, 2)
-            # two below reserve
-            result += 3 * (1 - reserve_price_cdf) * reserve_price_cdf ** 2 * reserve_price
-        else:
-            raise Exception("Aval... Aval... ")
+        result = reserve_price * n * (1 - reserve_price_cdf) * (reserve_price_cdf ** (n - 1))
+        result += reserve_price * (1 - self.os_cdf(n - 1, n, reserve_price))
+        for k in range(math.ceil(reserve_price), math.ceil(self.data[-1]) + 1):
+            result += (1 - self.os_cdf(n - 1, n, k))
         return result
 
     ########## Part C ###############
@@ -208,13 +197,11 @@ class Type:
         # returns your suggestion for a reserve price based on the self_data histogram.
         min_bound = int(self.order_statistic_expected_value(r=self.buyers_num - self.cars_num, n=self.buyers_num))
         max_bound = int(self.order_statistic_expected_value(r=self.buyers_num, n=self.buyers_num))
-        print(min_bound, max_bound)
 
         best_reserve_price = 0
         best_revenue = float('-inf')
 
         for reserve_price in range(min_bound, max_bound, 100):
-            print(reserve_price)
             expected_revenue = self.reserve_price_expected_revenue(reserve_price)
             if expected_revenue > best_revenue:
                 best_revenue = expected_revenue
