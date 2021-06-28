@@ -57,11 +57,11 @@ def calculate_payment(data, k, years, optimal_value, id):
     sw_with_id = optimal_value - data[data.id == id].value.iloc[0]
     data_without_id = data[data.id != id]
     sw_without_id = opt_bnd(data_without_id, k, years)['cost']
-    return sw_with_id - sw_without_id
+    return sw_without_id - sw_with_id
 
 
 def comb_vcg(data, k, years):  # TODO check this out
-    return proc_vcg( data, k, years)
+    return proc_vcg(data, k, years)
 
 
 def proc_vcg(data, k, years):  # TODO check if we need to call this proc_vcg
